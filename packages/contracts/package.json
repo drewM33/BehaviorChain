@@ -1,0 +1,25 @@
+{
+  "name": "@behaviorchain/contracts",
+  "version": "1.0.0",
+  "description": "BehaviorChain on-chain behavioral snapshot registry — ERC-8004 extension",
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "deploy:base-sepolia": "hardhat run scripts/deploy.ts --network baseSepolia"
+  },
+  "keywords": [
+    "erc-8004",
+    "behaviorchain",
+    "smart-contracts"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^6.1.2",
+    "@openzeppelin/contracts": "^5.6.1",
+    "@types/node": "^25.5.2",
+    "dotenv": "^17.4.0",
+    "hardhat": "^2.28.6",
+    "ts-node": "^10.9.2",
+    "typescript": "^6.0.2"
+  }
+}
