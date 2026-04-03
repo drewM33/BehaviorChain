@@ -11,4 +11,7 @@ export {
   type AutoCommitOptions,
   type BehaviorChainSDKConfig,
   ZERO_BYTES32,
+  BASE_SEPOLIA_CONTRACT,
+  BASE_MAINNET_CONTRACT,
+  DEFAULT_CONTRACT_ADDRESS,
 } from './types.js';
