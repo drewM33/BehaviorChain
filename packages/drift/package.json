@@ -1,0 +1,29 @@
+{
+  "name": "@behaviorchain/drift",
+  "version": "1.0.0",
+  "description": "Drift detection engine for BehaviorChain — real-time behavioral change monitoring for AI agents",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@behaviorchain/sdk": "file:../sdk",
+    "@valiron/sdk": "^0.10.0",
+    "ethers": "^6.13.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.5.0",
+    "vitest": "^3.0.0"
+  },
+  "keywords": [
+    "erc-8004",
+    "behaviorchain",
+    "drift-detection",
+    "ai-agents",
+    "behavioral-integrity"
+  ],
+  "license": "MIT"
+}
