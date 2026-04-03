@@ -3,7 +3,8 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "demo:seed": "npx ts-node scripts/demo-seed.ts"
+    "demo:seed": "npx ts-node scripts/demo-seed.ts",
+    "register:agent": "npx ts-node scripts/register-agent.ts"
   },
   "dependencies": {
     "@behaviorchain/sdk": "file:./packages/sdk",

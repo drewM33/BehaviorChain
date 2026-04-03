@@ -8,7 +8,7 @@ import { BehaviorChainSDK, type CommitResult } from '@behaviorchain/sdk';
 dotenvConfig({ path: path.resolve(__dirname, '..', '.env') });
 dotenvConfig({ path: path.resolve(__dirname, '..', 'packages', 'contracts', '.env') });
 
-const AGENT_ID = '25459';
+const AGENT_ID = process.env.AGENT_ID ?? '25459';
 
 const ERC8004_IDENTITY_ABI = [
   'function ownerOf(uint256 agentId) view returns (address)',
