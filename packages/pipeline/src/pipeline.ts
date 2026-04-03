@@ -13,6 +13,15 @@ import type {
   RetryEntry,
 } from './types.js';
 import type { IAgentKitProvider } from '@behaviorchain/drift';
+import {
+  AGENTKIT,
+  parseAgentkitHeader,
+  validateAgentkitMessage,
+  verifyAgentkitSignature,
+  createAgentBookVerifier,
+} from '@worldcoin/agentkit';
+
+const agentBook = createAgentBookVerifier({ network: 'base-sepolia' });
 
 export class BehaviorChainPipeline {
   private valiron: IValironSDK;
@@ -113,7 +122,7 @@ export class BehaviorChainPipeline {
   // Core: process a single evaluation event
   // -----------------------------------------------------------------------
 
-  async processEvaluation(agentId: string): Promise<CommitResult> {
+  async processEvaluation(agentId: string, humanNullifierHash?: string): Promise<CommitResult> {
     this.stats.commitsAttempted++;
 
     try {
@@ -135,7 +144,10 @@ export class BehaviorChainPipeline {
             blockNumber: 0,
             transactionHash: '',
           };
-          await this.driftEngine.processEvent(event);
+          const alert = await this.driftEngine.processEvent(event);
+          if (alert && humanNullifierHash) {
+            alert.humanNullifierHash = humanNullifierHash;
+          }
         }
       } else {
         this.stats.commitsSkipped++;
@@ -333,8 +345,24 @@ export class BehaviorChainPipeline {
         return c.json({ error: 'Invalid payload' }, 400);
       }
 
+      let humanNullifierHash: string | undefined;
+      const agentkitHeader = c.req.header(AGENTKIT);
+      if (agentkitHeader) {
+        try {
+          const parsed = parseAgentkitHeader(agentkitHeader);
+          await validateAgentkitMessage(parsed, c.req.url);
+          await verifyAgentkitSignature(parsed);
+          const human = await agentBook.lookupHuman(parsed.address, parsed.chainId);
+          if (human) {
+            humanNullifierHash = human.nullifierHash;
+          }
+        } catch {
+          // AgentKit verification failed — proceed without human attribution
+        }
+      }
+
       const agentId = String(body.agentId);
-      const result = await this.processEvaluation(agentId);
+      const result = await this.processEvaluation(agentId, humanNullifierHash);
 
       return c.json({
         ok: true,

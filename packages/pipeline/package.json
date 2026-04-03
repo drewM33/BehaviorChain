@@ -12,6 +12,7 @@
   "dependencies": {
     "@behaviorchain/sdk": "file:../sdk",
     "@behaviorchain/drift": "file:../drift",
+    "@worldcoin/agentkit": "^0.1.0",
     "hono": "^4.0.0",
     "@hono/node-server": "^1.0.0"
   },

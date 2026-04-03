@@ -1,5 +1,26 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { createHash } from 'node:crypto';
+
+const {
+  mockParseAgentkitHeader,
+  mockValidateAgentkitMessage,
+  mockVerifyAgentkitSignature,
+  mockLookupHuman,
+} = vi.hoisted(() => ({
+  mockParseAgentkitHeader: vi.fn(),
+  mockValidateAgentkitMessage: vi.fn(),
+  mockVerifyAgentkitSignature: vi.fn(),
+  mockLookupHuman: vi.fn(),
+}));
+
+vi.mock('@worldcoin/agentkit', () => ({
+  AGENTKIT: 'x-agentkit',
+  parseAgentkitHeader: mockParseAgentkitHeader,
+  validateAgentkitMessage: mockValidateAgentkitMessage,
+  verifyAgentkitSignature: mockVerifyAgentkitSignature,
+  createAgentBookVerifier: vi.fn(() => ({ lookupHuman: mockLookupHuman })),
+}));
+
 import { BehaviorChainPipeline } from '../src/pipeline.js';
 import type {
   IBehaviorChainSDK,
@@ -210,6 +231,11 @@ beforeEach(() => {
     retryIntervalMs: 100,
     maxRetries: 3,
   });
+
+  mockParseAgentkitHeader.mockReset();
+  mockValidateAgentkitMessage.mockReset();
+  mockVerifyAgentkitSignature.mockReset();
+  mockLookupHuman.mockReset();
 });
 
 afterEach(async () => {
@@ -623,5 +649,111 @@ describe('Exit metrics', () => {
     await pipeline.processRetryQueue();
 
     expect(pipeline.stats.retriesProcessed).toBeGreaterThanOrEqual(1);
+  });
+});
+
+// ===========================================================================
+// AgentKit webhook verification
+// ===========================================================================
+describe('AgentKit webhook verification', () => {
+  it('valid AgentKit header → nullifier hash attached to drift alert', async () => {
+    const hash = mockHash('agentkit-valid');
+    valiron.setSnapshot('42', hash);
+
+    mockParseAgentkitHeader.mockReturnValue({ address: '0xABCD', chainId: 84532 });
+    mockValidateAgentkitMessage.mockResolvedValue(undefined);
+    mockVerifyAgentkitSignature.mockResolvedValue(undefined);
+    mockLookupHuman.mockResolvedValue({ nullifierHash: '0xNULLIFIER123' });
+
+    const res = await pipeline.app.request('/hooks/valiron', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-agentkit': 'valid-agentkit-header',
+      },
+      body: JSON.stringify({ event: 'evaluation_complete', agentId: '42' }),
+    });
+
+    expect(res.status).toBe(200);
+    const body = await res.json() as Record<string, unknown>;
+    expect(body.committed).toBe(true);
+
+    expect(mockParseAgentkitHeader).toHaveBeenCalledWith('valid-agentkit-header');
+    expect(mockVerifyAgentkitSignature).toHaveBeenCalled();
+    expect(mockLookupHuman).toHaveBeenCalledWith('0xABCD', 84532);
+
+    expect(driftEngine.alerts).toHaveLength(1);
+    expect(driftEngine.alerts[0].humanNullifierHash).toBe('0xNULLIFIER123');
+  });
+
+  it('invalid AgentKit signature → commit proceeds without nullifier', async () => {
+    const hash = mockHash('agentkit-invalid-sig');
+    valiron.setSnapshot('42', hash);
+
+    mockParseAgentkitHeader.mockReturnValue({ address: '0xABCD', chainId: 84532 });
+    mockValidateAgentkitMessage.mockResolvedValue(undefined);
+    mockVerifyAgentkitSignature.mockRejectedValue(new Error('Invalid signature'));
+
+    const res = await pipeline.app.request('/hooks/valiron', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-agentkit': 'bad-sig-header',
+      },
+      body: JSON.stringify({ event: 'evaluation_complete', agentId: '42' }),
+    });
+
+    expect(res.status).toBe(200);
+    const body = await res.json() as Record<string, unknown>;
+    expect(body.committed).toBe(true);
+
+    expect(driftEngine.alerts).toHaveLength(1);
+    expect(driftEngine.alerts[0].humanNullifierHash).toBeUndefined();
+  });
+
+  it('missing AgentKit header → commit proceeds without nullifier', async () => {
+    const hash = mockHash('agentkit-missing');
+    valiron.setSnapshot('42', hash);
+
+    const res = await pipeline.app.request('/hooks/valiron', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ event: 'evaluation_complete', agentId: '42' }),
+    });
+
+    expect(res.status).toBe(200);
+    const body = await res.json() as Record<string, unknown>;
+    expect(body.committed).toBe(true);
+
+    expect(mockParseAgentkitHeader).not.toHaveBeenCalled();
+    expect(driftEngine.alerts).toHaveLength(1);
+    expect(driftEngine.alerts[0].humanNullifierHash).toBeUndefined();
+  });
+
+  it('lookupHuman returns null → commit proceeds without nullifier', async () => {
+    const hash = mockHash('agentkit-no-human');
+    valiron.setSnapshot('42', hash);
+
+    mockParseAgentkitHeader.mockReturnValue({ address: '0xDEAD', chainId: 84532 });
+    mockValidateAgentkitMessage.mockResolvedValue(undefined);
+    mockVerifyAgentkitSignature.mockResolvedValue(undefined);
+    mockLookupHuman.mockResolvedValue(null);
+
+    const res = await pipeline.app.request('/hooks/valiron', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-agentkit': 'unregistered-agent-header',
+      },
+      body: JSON.stringify({ event: 'evaluation_complete', agentId: '42' }),
+    });
+
+    expect(res.status).toBe(200);
+    const body = await res.json() as Record<string, unknown>;
+    expect(body.committed).toBe(true);
+
+    expect(mockLookupHuman).toHaveBeenCalledWith('0xDEAD', 84532);
+    expect(driftEngine.alerts).toHaveLength(1);
+    expect(driftEngine.alerts[0].humanNullifierHash).toBeUndefined();
   });
 });
