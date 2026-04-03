@@ -3,4 +3,5 @@ artifacts
 cache
 typechain-types
 coverage
+dist
 .env
