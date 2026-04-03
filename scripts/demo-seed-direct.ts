@@ -101,9 +101,9 @@ async function main() {
 
     txHashes.push(tx.hash);
 
-    // Re-read the chain head from the contract — don't assume our hash landed as-is
-    previousHash = await registry.getChainHead(agentId);
-    console.log(`        chain head:   ${previousHash}`);
+    // The tx succeeded, so this committed hash is now the canonical chain head.
+    previousHash = hash;
+    console.log(`        next prev:    ${previousHash}`);
 
     if (i < 2) {
       console.log('        waiting 3 s before next commit…\n');
@@ -116,7 +116,9 @@ async function main() {
   // ── Verify chain via events ──────────────────────────────────────────
   console.log('[✓] Verifying chain via SnapshotCommitted events…');
   const filter = registry.filters.SnapshotCommitted(agentId);
-  const events = await registry.queryFilter(filter);
+  const latestBlock = await provider.getBlockNumber();
+  const fromBlock = Math.max(0, latestBlock - 9_999);
+  const events = await registry.queryFilter(filter, fromBlock, latestBlock);
 
   let chainValid = true;
   let expectedPrev = ethers.ZeroHash;
