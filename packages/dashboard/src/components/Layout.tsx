@@ -1,11 +1,11 @@
 import { NavLink, Outlet } from 'react-router-dom';
 
 const NAV_ITEMS = [
-  { to: '/agent/42', label: 'Telemetry', icon: '◈' },
+  { to: '/agent/3458', label: 'Telemetry', icon: '◈' },
   { to: '/drift', label: 'Race Control', icon: '⚑' },
   { to: '/leaderboard', label: 'Standings', icon: '▲' },
   { to: '/stats', label: 'Pit Wall', icon: '◫' },
-  { to: '/badge/42', label: 'Badge', icon: '◆' },
+  { to: '/badge/3458', label: 'Badge', icon: '◆' },
 ];
 
 export function Layout() {

@@ -11,7 +11,7 @@ export function App() {
   return (
     <Routes>
       <Route element={<Layout />}>
-        <Route path="/" element={<Navigate to="/agent/42" replace />} />
+        <Route path="/" element={<Navigate to="/agent/3458" replace />} />
         <Route path="/agent/:agentId" element={<Telemetry />} />
         <Route path="/drift" element={<RaceControl />} />
         <Route path="/leaderboard" element={<Standings />} />

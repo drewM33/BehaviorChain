@@ -8,6 +8,8 @@ interface ChainNode {
   timestamp: number;
   encryptedDataUri: string;
   description: string;
+  txHash?: string;
+  blockNumber?: number;
 }
 
 interface HashChainVizProps {
@@ -121,6 +123,32 @@ export function HashChainViz({ chain, driftAlerts }: HashChainVizProps) {
               <span className="text-neutral-500">IPFS </span>
               <span className="text-neutral-400">{formatHash(selectedNode.encryptedDataUri)}</span>
             </div>
+            {selectedNode.txHash && (
+              <div>
+                <span className="text-neutral-500">Tx </span>
+                <a
+                  href={`https://sepolia.basescan.org/tx/${selectedNode.txHash}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-chain hover:underline"
+                >
+                  {formatHash(selectedNode.txHash)}
+                </a>
+              </div>
+            )}
+            {selectedNode.blockNumber !== undefined && (
+              <div>
+                <span className="text-neutral-500">Block </span>
+                <a
+                  href={`https://sepolia.basescan.org/block/${selectedNode.blockNumber}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-chain hover:underline"
+                >
+                  {selectedNode.blockNumber}
+                </a>
+              </div>
+            )}
           </div>
           {selectedAlerts.length > 0 && (
             <div className="mt-3 pt-3 border-t border-surface-border">

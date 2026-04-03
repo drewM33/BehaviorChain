@@ -6,6 +6,17 @@ import { HashChainViz } from '../components/HashChainViz';
 import { DriftAlertCard } from '../components/DriftAlertCard';
 import type { DriftAlert } from '@behaviorchain/drift';
 
+interface ChainNodeData {
+  index: number;
+  snapshotHash: string;
+  previousHash: string;
+  timestamp: number;
+  encryptedDataUri: string;
+  description: string;
+  txHash?: string;
+  blockNumber?: number;
+}
+
 interface ProfileData {
   agentId: number;
   name: string;
@@ -16,14 +27,7 @@ interface ProfileData {
     firstChange: number;
     lastChange: number;
     lastChangeDescription: string;
-    nodes: Array<{
-      index: number;
-      snapshotHash: string;
-      previousHash: string;
-      timestamp: number;
-      encryptedDataUri: string;
-      description: string;
-    }>;
+    nodes: ChainNodeData[];
   };
   trust: {
     score: number;
@@ -57,7 +61,8 @@ function severityColor(s: string): 'green' | 'yellow' | 'red' | 'neutral' {
   return 'neutral';
 }
 
-const AGENT_IDS = [42, 43, 44, 45, 46, 47];
+const LIVE_AGENT = 3458;
+const AGENT_IDS = [3458, 42, 43, 44, 45, 46, 47];
 
 export function Telemetry() {
   const { agentId } = useParams<{ agentId: string }>();
@@ -97,13 +102,16 @@ export function Telemetry() {
           <Link
             key={id}
             to={`/agent/${id}`}
-            className={`px-3 py-1 rounded text-sm font-mono transition-colors ${
+            className={`px-3 py-1 rounded text-sm font-mono transition-colors flex items-center gap-1.5 ${
               Number(agentId) === id
                 ? 'bg-chain text-white'
                 : 'bg-surface border border-surface-border text-neutral-400 hover:text-white'
             }`}
           >
             #{id}
+            {id === LIVE_AGENT && (
+              <span className="inline-block w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+            )}
           </Link>
         ))}
       </div>
@@ -114,6 +122,11 @@ export function Telemetry() {
           Agent #{data.agentId}
         </h1>
         <span className="text-neutral-500 font-mono text-sm">{data.name}</span>
+        {data.agentId === LIVE_AGENT && (
+          <span className="px-2 py-0.5 rounded text-[10px] font-bold tracking-wider bg-green-500/15 text-green-400 border border-green-500/30 uppercase">
+            Live on-chain
+          </span>
+        )}
         <Link
           to={`/badge/${data.agentId}`}
           className="ml-auto text-xs text-chain hover:underline font-mono"

@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { streamSSE } from 'hono/streaming';
@@ -11,6 +12,18 @@ import {
   generateLiveAlert,
   AGENTS,
 } from './mock-data.js';
+import {
+  getOnChainChain,
+  getOnChainHead,
+  verifyOnChainChain,
+  getOnChainProfile,
+} from './on-chain.js';
+
+const LIVE_AGENT = 3458;
+
+function isLiveAgent(agentId: number): boolean {
+  return agentId === LIVE_AGENT;
+}
 
 export const app = new Hono();
 
@@ -19,8 +32,19 @@ app.use('*', cors());
 // -------------------------------------------------------------------------
 // GET /api/agents/:agentId/chain — full snapshot chain
 // -------------------------------------------------------------------------
-app.get('/api/agents/:agentId/chain', (c) => {
-  const agent = getAgent(Number(c.req.param('agentId')));
+app.get('/api/agents/:agentId/chain', async (c) => {
+  const agentId = Number(c.req.param('agentId'));
+
+  if (isLiveAgent(agentId)) {
+    try {
+      const data = await getOnChainChain(agentId);
+      return c.json(data);
+    } catch (e: any) {
+      return c.json({ error: `On-chain query failed: ${e.message}` }, 502);
+    }
+  }
+
+  const agent = getAgent(agentId);
   if (!agent) return c.json({ error: 'Agent not found' }, 404);
 
   return c.json({
@@ -33,8 +57,19 @@ app.get('/api/agents/:agentId/chain', (c) => {
 // -------------------------------------------------------------------------
 // GET /api/agents/:agentId/chain/head — current head hash + count
 // -------------------------------------------------------------------------
-app.get('/api/agents/:agentId/chain/head', (c) => {
-  const agent = getAgent(Number(c.req.param('agentId')));
+app.get('/api/agents/:agentId/chain/head', async (c) => {
+  const agentId = Number(c.req.param('agentId'));
+
+  if (isLiveAgent(agentId)) {
+    try {
+      const data = await getOnChainHead(agentId);
+      return c.json(data);
+    } catch (e: any) {
+      return c.json({ error: `On-chain query failed: ${e.message}` }, 502);
+    }
+  }
+
+  const agent = getAgent(agentId);
   if (!agent) return c.json({ error: 'Agent not found' }, 404);
 
   const head = agent.chain[agent.chain.length - 1];
@@ -49,8 +84,19 @@ app.get('/api/agents/:agentId/chain/head', (c) => {
 // -------------------------------------------------------------------------
 // GET /api/agents/:agentId/chain/verify — verify chain integrity
 // -------------------------------------------------------------------------
-app.get('/api/agents/:agentId/chain/verify', (c) => {
-  const agent = getAgent(Number(c.req.param('agentId')));
+app.get('/api/agents/:agentId/chain/verify', async (c) => {
+  const agentId = Number(c.req.param('agentId'));
+
+  if (isLiveAgent(agentId)) {
+    try {
+      const data = await verifyOnChainChain(agentId);
+      return c.json(data);
+    } catch (e: any) {
+      return c.json({ error: `On-chain query failed: ${e.message}` }, 502);
+    }
+  }
+
+  const agent = getAgent(agentId);
   if (!agent) return c.json({ error: 'Agent not found' }, 404);
 
   const result = verifyChain(agent.chain);
@@ -79,8 +125,19 @@ app.get('/api/agents/:agentId/drift', (c) => {
 // -------------------------------------------------------------------------
 // GET /api/agents/:agentId/profile — combined chain + Valiron trust profile
 // -------------------------------------------------------------------------
-app.get('/api/agents/:agentId/profile', (c) => {
-  const agent = getAgent(Number(c.req.param('agentId')));
+app.get('/api/agents/:agentId/profile', async (c) => {
+  const agentId = Number(c.req.param('agentId'));
+
+  if (isLiveAgent(agentId)) {
+    try {
+      const data = await getOnChainProfile(agentId);
+      return c.json(data);
+    } catch (e: any) {
+      return c.json({ error: `On-chain query failed: ${e.message}` }, 502);
+    }
+  }
+
+  const agent = getAgent(agentId);
   if (!agent) return c.json({ error: 'Agent not found' }, 404);
 
   const head = agent.chain[agent.chain.length - 1];
@@ -118,7 +175,19 @@ app.get('/api/agents/:agentId/profile', (c) => {
 // GET /api/agents/:agentId/delegation — AgentKit delegation info
 // -------------------------------------------------------------------------
 app.get('/api/agents/:agentId/delegation', (c) => {
-  const agent = getAgent(Number(c.req.param('agentId')));
+  const agentId = Number(c.req.param('agentId'));
+
+  if (isLiveAgent(agentId)) {
+    return c.json({
+      agentId,
+      delegated: true,
+      humanNullifierHash:
+        '0x2c762ca9a7408c4ad70c7456f220387dd7036e61d47c41b9e94ef4764b9381b3',
+      delegationTimestamp: Date.now() - 7 * 86_400_000,
+    });
+  }
+
+  const agent = getAgent(agentId);
   if (!agent) return c.json({ error: 'Agent not found' }, 404);
 
   if (!agent.delegation) {
