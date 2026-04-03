@@ -1,0 +1,19 @@
+{
+  "name": "behaviorchain",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "demo:seed": "npx ts-node scripts/demo-seed.ts"
+  },
+  "dependencies": {
+    "@behaviorchain/sdk": "file:./packages/sdk",
+    "@valiron/sdk": "^0.10.0",
+    "dotenv": "^16.4.0",
+    "ethers": "^6.13.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "ts-node": "^10.9.0",
+    "typescript": "^5.5.0"
+  }
+}
