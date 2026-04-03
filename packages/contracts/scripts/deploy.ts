@@ -1,6 +1,6 @@
 import { ethers, run, network } from "hardhat";
 
-const ERC8004_IDENTITY_REGISTRY = "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432";
+const ERC8004_IDENTITY_REGISTRY = "0x8004A818BFB912233c491871b3d84c89A494BD9e";
 
 async function main() {
   const [deployer] = await ethers.getSigners();

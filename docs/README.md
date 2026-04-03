@@ -74,7 +74,7 @@ Tamper-proof behavioral identity for AI agents. An ERC-8004 extension that hash-
 
 - Node.js 18+
 - A wallet with ETH on Base Sepolia (get testnet ETH from [base.org/faucet](https://www.base.org/faucet))
-- An agent registered in the [ERC-8004 Identity Registry](https://basescan.org/address/0x8004A169FB4a3325136EB29fA0ceB6D2e539a432)
+- An agent registered in the [ERC-8004 Identity Registry](https://sepolia.basescan.org/address/0x8004A818BFB912233c491871b3d84c89A494BD9e)
 
 ### 1. Clone and install
 
@@ -89,7 +89,7 @@ npm install
 ```bash
 export BEHAVIORCHAIN_RPC_URL="https://sepolia.base.org"
 export BEHAVIORCHAIN_PRIVATE_KEY="0x_YOUR_PRIVATE_KEY"
-export BEHAVIORCHAIN_CONTRACT_ADDRESS="0x8DdD21004CC5EF801b3Fa5017842Fa9Bf62dAed0"
+export BEHAVIORCHAIN_CONTRACT_ADDRESS="0xDe27DF9DA6BaD0b172F3F1b48CEe818dFE4487CD"
 ```
 
 ### 3. Commit a genesis snapshot
@@ -153,7 +153,7 @@ POST https://valiron.dev/operator/webhooks/register
 
 | Network | Chain ID | Contract Address |
 |---------|----------|-----------------|
-| Base Sepolia | 84532 | `0x8DdD21004CC5EF801b3Fa5017842Fa9Bf62dAed0` |
+| Base Sepolia | 84532 | `0xDe27DF9DA6BaD0b172F3F1b48CEe818dFE4487CD` |
 | Base Mainnet | 8453 | *(deploy with `npx hardhat run scripts/deploy.ts --network base`)* |
 
 ## Further Reading

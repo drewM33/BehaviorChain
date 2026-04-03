@@ -6,11 +6,12 @@ import { config as dotenvConfig } from 'dotenv';
 dotenvConfig({ path: path.resolve(__dirname, '..', '.env') });
 dotenvConfig({ path: path.resolve(__dirname, '..', 'packages', 'contracts', '.env') });
 
-const IDENTITY_REGISTRY = '0x8004A169FB4a3325136EB29fA0ceB6D2e539a432';
+const IDENTITY_REGISTRY = '0x8004A818BFB912233c491871b3d84c89A494BD9e';
 
 const IDENTITY_REGISTRY_ABI = [
-  'function register(string tokenURI) returns (uint256)',
+  'function register(string agentURI) returns (uint256)',
   'event Transfer(address indexed from, address indexed to, uint256 indexed tokenId)',
+  'event Registered(uint256 indexed agentId, string agentURI, address indexed owner)',
 ];
 
 const AGENT_CARD = {

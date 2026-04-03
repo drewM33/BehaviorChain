@@ -47,7 +47,7 @@ import { ValironSDK } from '@valiron/sdk';
 const sdk = new BehaviorChainSDK({
   rpcUrl: 'https://sepolia.base.org',
   privateKey: process.env.BEHAVIORCHAIN_PRIVATE_KEY!,
-  contractAddress: '0x8DdD21004CC5EF801b3Fa5017842Fa9Bf62dAed0',
+  contractAddress: '0xDe27DF9DA6BaD0b172F3F1b48CEe818dFE4487CD',
   valiron: new ValironSDK({ chain: 'base' }),
 });
 
@@ -61,7 +61,7 @@ See the [full quickstart](docs/README.md) for a complete walkthrough.
 
 | Network | Chain ID | Contract |
 |---------|----------|----------|
-| Base Sepolia | 84532 | `0x8DdD21004CC5EF801b3Fa5017842Fa9Bf62dAed0` |
+| Base Sepolia | 84532 | `0xDe27DF9DA6BaD0b172F3F1b48CEe818dFE4487CD` |
 | Base Mainnet | 8453 | Deploy: `npx hardhat run scripts/deploy.ts --network base` |
 
 ## Documentation

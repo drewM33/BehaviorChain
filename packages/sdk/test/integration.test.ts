@@ -2,7 +2,7 @@
  * Integration tests against the deployed BehaviorSnapshotRegistry on Base Sepolia.
  *
  * These tests exercise read-only contract calls and event queries against the
- * live deployment at 0x8DdD21004CC5EF801b3Fa5017842Fa9Bf62dAed0.
+ * live deployment at 0xDe27DF9DA6BaD0b172F3F1b48CEe818dFE4487CD.
  *
  * To run write tests (commitIfChanged), the signer must be the owner of the
  * target agentId in the ERC-8004 Identity Registry.
@@ -21,7 +21,7 @@ import type { IValironSDK } from '../src/types.js';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
-const CONTRACT_ADDRESS = '0x8DdD21004CC5EF801b3Fa5017842Fa9Bf62dAed0';
+const CONTRACT_ADDRESS = '0xDe27DF9DA6BaD0b172F3F1b48CEe818dFE4487CD';
 const RPC_URL = 'https://sepolia.base.org';
 
 async function getRecentFromBlock(provider: ethers.JsonRpcProvider): Promise<number> {

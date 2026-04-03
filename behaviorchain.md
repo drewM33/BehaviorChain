@@ -142,7 +142,7 @@ Valiron plans to add supply chain integrity signals internally. When added, `sna
 ### Supported Chains
 
 ERC-8004 registries (same address all chains):
-- Identity: `0x8004A169FB4a3325136EB29fA0ceB6D2e539a432`
+- Identity: `0x8004A818BFB912233c491871b3d84c89A494BD9e`
 - Reputation: `0x8004BAa17C55a88189AE136b182e5fdA19dE9b63`
 
 Deploy BehaviorSnapshotRegistry to **Base Sepolia** (testnet) and **Base mainnet** (production).

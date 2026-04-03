@@ -83,7 +83,7 @@ export const ZERO_BYTES32 =
   '0x0000000000000000000000000000000000000000000000000000000000000000';
 
 /** Base Sepolia (testnet) deployment. */
-export const BASE_SEPOLIA_CONTRACT = '0x8DdD21004CC5EF801b3Fa5017842Fa9Bf62dAed0';
+export const BASE_SEPOLIA_CONTRACT = '0xDe27DF9DA6BaD0b172F3F1b48CEe818dFE4487CD';
 
 /** Base mainnet deployment — set after `npx hardhat run scripts/deploy.ts --network base`. */
 export const BASE_MAINNET_CONTRACT = '';

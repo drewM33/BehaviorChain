@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "demo:seed": "npx ts-node scripts/demo-seed.ts",
+    "demo:seed:direct": "npx ts-node scripts/demo-seed-direct.ts",
     "register:agent": "npx ts-node scripts/register-agent.ts"
   },
   "dependencies": {
