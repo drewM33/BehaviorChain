@@ -429,11 +429,6 @@ function EscalationPanel({ tiers, activeSignalCount, onActionChange, onInputChan
 }
 
 function AuditLog({ entries }: { entries: AuditEntry[] }) {
-  const scrollContainerRef = useRef<HTMLDivElement>(null)
-  useEffect(() => {
-    const container = scrollContainerRef.current
-    if (container) container.scrollTo({ top: container.scrollHeight, behavior: "smooth" })
-  }, [entries.length])
 
   return (
     <div className="relative overflow-hidden rounded-2xl border border-border/30 glass-panel noise-bg">
@@ -447,7 +442,7 @@ function AuditLog({ entries }: { entries: AuditEntry[] }) {
           <p className="text-[10px] text-muted-foreground/30 mt-1">Run a simulation to generate audit trail</p>
         </div>
       ) : (
-        <div ref={scrollContainerRef} className="relative z-10 max-h-[320px] overflow-y-auto">
+        <div className="relative z-10 max-h-[320px] overflow-y-auto">
           {entries.map((entry, i) => (
             <div key={i} className="px-6 py-3 border-b border-border/10 last:border-0 animate-float-up">
               <div className="flex items-start gap-3">
@@ -527,8 +522,6 @@ export function ControlCenter() {
         setSignals((prev) => prev.map((s) => (s.id === sigId ? { ...s, triggered: true } : s)))
         setFleet((prev) => prev.map((a) => a.id === targetAgent ? { ...a, activeSignals: idx + 1, escalationStatus: escalationStatuses[idx], lastChange: Date.now() } : a))
         setAuditLog((prev) => [...prev, { timestamp: Date.now(), agentId: targetAgent, signal: SIGNAL_NAMES[idx], tier: idx + 1, action: ESCALATION_ACTIONS[idx] }])
-        const tierEl = document.querySelector(`[data-tier="${idx + 1}"]`)
-        tierEl?.scrollIntoView({ behavior: "smooth", block: "center" })
         if (idx === signalIds.length - 1) setSimulating(false)
       }, (idx + 1) * 1200)
       simTimeoutsRef.current.push(timeout)
