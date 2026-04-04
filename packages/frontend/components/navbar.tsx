@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation"
 import { Radio, Square, Flag } from "lucide-react"
 
 const navItems = [
-  { href: "/agent/8192", label: "Telemetry", icon: Radio },
+  { href: "/agent/8192", label: "Control Panel", icon: Radio },
   { href: "/drift", label: "Behavior Detection", icon: Flag },
   { href: "/stats", label: "Longevity", icon: Square },
 ]

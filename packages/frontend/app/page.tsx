@@ -44,7 +44,7 @@ const features = [
 ]
 
 const pages = [
-  { href: "/agent/8192", label: "Telemetry", icon: Radio, description: "Live agent profile with chain visualization and trust overlay" },
+  { href: "/agent/8192", label: "Control Panel", icon: Radio, description: "Live agent profile with chain visualization and trust overlay" },
   { href: "/drift", label: "Behavior Detection", icon: Flag, description: "Real-time drift alert feed with severity classification" },
   { href: "/stats", label: "Longevity", icon: Square, description: "Aggregate monitoring statistics and system health" },
 ]

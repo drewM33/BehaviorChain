@@ -10,7 +10,7 @@ import {
 } from "lucide-react"
 
 const navItems = [
-  { href: "/agent/8192", label: "Telemetry", icon: Activity },
+  { href: "/agent/8192", label: "Control Panel", icon: Activity },
   { href: "/drift", label: "Behavior Detection", icon: Flag },
   { href: "/stats", label: "Pit Wall", icon: BarChart3 },
 ]
