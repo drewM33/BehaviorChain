@@ -18,6 +18,7 @@ import {
   verifyOnChainChain,
   getOnChainProfile,
 } from './on-chain.js';
+import { registerWorldIdRoutes } from './world-id.js';
 
 function isLiveAgent(agentId: number): boolean {
   return agentId > 0;
@@ -26,6 +27,8 @@ function isLiveAgent(agentId: number): boolean {
 export const app = new Hono();
 
 app.use('*', cors());
+
+registerWorldIdRoutes(app);
 
 // -------------------------------------------------------------------------
 // GET /api/agents/:agentId/chain — full snapshot chain
