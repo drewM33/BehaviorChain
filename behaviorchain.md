@@ -474,40 +474,37 @@ GET  /api/stats
 GET  /api/leaderboard
 ```
 
-### Dashboard
+### Frontend (Next.js)
 
-- Agent profile with chain visualization + Valiron overlay + human delegator
-- Chain explorer
-- Drift feed (real-time, filterable)
-- Integrity badge: "3 changes in 180 days, 0 drift flags"
-- Leaderboard: fewest changes = most stable
-- Stats page
+- **Control Panel** — dynamic agent fleet cards with live trust scores, sparklines, tier history, and escalation status. Signal monitoring with configurable sensitivity. 5-tier escalation policy (Notify → Escalate → War room → Contain → Kill switch) with simulate-attack capability. Agent profile with chain visualization + Valiron overlay + human delegator.
+- **Behavior Detection** — real-time drift alert feed with severity filtering (All / Yellow+ / Red Only). Live-updating with sub-second intervals.
+- **Longevity** — aggregate monitoring statistics and system health.
+- **Home** — product overview with architecture diagram and feature cards.
 
 ### Prioritization (MoSCoW)
 
-- **Must:** Chain/head/verify/drift API endpoints, agent profile page with chain visualization, chain explorer, drift feed (real-time)
-- **Should:** Integrity badge (embeddable SVG), leaderboard (stability ranking), stats page, WebSocket streaming, AgentKit delegation display on profile
+- **Must:** Agent profile page with chain visualization, drift feed (real-time), Control Panel with fleet cards and escalation policy, signal monitoring with sensitivity controls
+- **Should:** Stats page, AgentKit delegation display on profile, simulate-attack capability, tier history on fleet cards
 - **Could:** Community drift flagging via API, embeddable dashboard widgets, historical trend charts
 
 ### Milestone Goals
 
 Phase 4 is complete when ALL of the following pass:
 
-1. Chain API returns full hash chain
-2. Verify endpoint detects tampered chains
-3. Drift history returned
-4. Profile page renders
-5. Drift feed within 5 seconds
-6. Badge renders accurately
-7. Leaderboard ranks by stability
-8. Human delegator shown when available
+1. Control Panel renders fleet agent cards with live trust scores and sparklines
+2. Escalation policy configurable with 5-tier ladder and simulate-attack
+3. Signal monitoring with toggle and sensitivity controls
+4. Drift feed updates in real-time with severity filtering
+5. Agent profile page renders with chain visualization and trust overlay
+6. Human delegator shown when available
+7. Stats page renders aggregate system health
 
 ### Exit Metrics
 
-- All API endpoints return correct data for agents with 0, 1, 10, and 100+ snapshots
-- Dashboard loads in < 2 seconds on first paint
-- Drift feed latency: commit event → visible in dashboard < 5 seconds
-- Integrity badge SVG is valid, renders in all major browsers, and updates within 60 seconds of new commit
+- Frontend loads in < 2 seconds on first paint
+- Drift feed latency: commit event → visible in feed < 5 seconds
+- Fleet cards update live with trust score sparklines and clean lap counters
+- Escalation simulation runs through all 5 tiers with animated progression
 
 ### Phase Retrospective
 
@@ -640,7 +637,8 @@ Phase 6 is complete when ALL of the following pass:
 - `@behaviorchain/contracts` — Solidity + deployment + ABIs
 - `@behaviorchain/sdk` — TypeScript SDK (depends on `@valiron/sdk@^0.10.0`)
 - `@behaviorchain/drift` — Drift detection engine
-- `@behaviorchain/dashboard` — React dashboard + API
+- `@behaviorchain/frontend` — Next.js dashboard (Control Panel, drift feed, stats)
+- `@behaviorchain/dashboard` — Hono API server (legacy Vite dashboard)
 
 ---
 

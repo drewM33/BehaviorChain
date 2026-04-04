@@ -48,13 +48,13 @@ Tamper-proof behavioral identity for AI agents. An ERC-8004 extension that hash-
                │
                ▼
 ┌──────────────────────────────────────┐
-│     @behaviorchain/dashboard         │
+│     Frontend (Next.js)               │
 │                                      │
-│  Telemetry  ► agent profile + chain  │
-│  Race Control ► real-time drift feed │
-│  Standings  ► stability leaderboard  │
-│  Pit Wall   ► aggregate stats        │
-│  Badge      ► embeddable SVG         │
+│  Control Panel ► fleet cards,        │
+│    escalation, signal monitoring,    │
+│    agent profile + chain viz         │
+│  Behavior Detection ► drift feed    │
+│  Longevity ► aggregate stats         │
 └──────────────────────────────────────┘
 ```
 

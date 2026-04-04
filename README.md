@@ -30,7 +30,8 @@ Valiron evaluates agent → snapshot hash changes → SDK commits on-chain
 | [`@behaviorchain/sdk`](packages/sdk) | TypeScript SDK — commit-on-change, chain verification |
 | [`@behaviorchain/drift`](packages/drift) | Drift detection engine — severity classification, alerting |
 | [`@behaviorchain/pipeline`](packages/pipeline) | Valiron integration — webhooks, recovery, trust signals |
-| [`@behaviorchain/dashboard`](packages/dashboard) | React dashboard + API server |
+| [`@behaviorchain/frontend`](packages/frontend) | Next.js dashboard — Control Panel, drift feed, stats |
+| [`@behaviorchain/dashboard`](packages/dashboard) | Hono API server (legacy Vite dashboard) |
 
 ## Quickstart
 
@@ -103,8 +104,8 @@ Valiron (evaluation) ──► Pipeline (webhook) ──► SDK (commitIfChanged
                                          (severity classification)
                                                      │
                                                      ▼
-                                               Dashboard
-                                          (real-time monitoring)
+                                              Frontend (Next.js)
+                                     Control Panel · Drift Feed · Stats
 ```
 
 ## License
