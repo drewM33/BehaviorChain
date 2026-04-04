@@ -8,7 +8,7 @@ import { useWallet } from "@/lib/wallet-context"
 import { cn } from "@/lib/utils"
 
 const navItems = [
-  { href: "/", label: "Telemetry", icon: Radio },
+  { href: "/agent/3458", label: "Telemetry", icon: Radio },
   { href: "/drift", label: "Behavior Detection", icon: Flag },
   { href: "/explorer", label: "Circuit", icon: Link2 },
   { href: "/leaderboard", label: "Standings", icon: Triangle },
