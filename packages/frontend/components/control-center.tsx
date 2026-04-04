@@ -7,7 +7,9 @@ type EscalationStatus = "quiet" | "notified" | "escalated" | "war room" | "conta
 type SignalSensitivity = "low" | "medium" | "high"
 type Network = "Base Sepolia" | "Base mainnet"
 
-type TrustGrade = "AAA" | "AA" | "A" | "BA" | "B" | "UNRATED"
+type TrustTier = "AAA" | "AA" | "A" | "BAA" | "BA" | "B" | "CAA" | "CA" | "C"
+type Risk = "GREEN" | "YELLOW" | "RED"
+type Route = "prod" | "prod_throttled" | "sandbox" | "sandbox_only"
 
 interface FleetAgent {
   id: number
@@ -18,16 +20,15 @@ interface FleetAgent {
   lastChange: number
   activeSignals: number
   escalationStatus: EscalationStatus
-  address: string
-  trustGrade: TrustGrade
-  costPerReq: number
-  costMultiplier: number
-  infraCost: number
-  valueCost: number
-  cer: number
-  cerDelta: number
-  requests: number
-  gradeHistory: TrustGrade[]
+  trustScore: number
+  tier: TrustTier
+  risk: Risk
+  route: Route
+  cleanLaps: number
+  changesPerMonth: number
+  chainIntegrity: "valid" | "broken"
+  lastChangeDesc: string
+  tierHistory: TrustTier[]
   sparkline: number[]
 }
 
@@ -83,17 +84,17 @@ function seedSparkline(base: number, variance: number, len: number): number[] {
   let v = base
   for (let i = 0; i < len; i++) {
     v += (Math.random() - 0.5) * variance
-    v = Math.max(0, v)
+    v = Math.max(0, Math.min(110, v))
     pts.push(v)
   }
   return pts
 }
 
 const MOCK_FLEET: FleetAgent[] = [
-  { id: 3458, name: "prod-inference-v3", chain: "Base Sepolia", worldId: { verified: true, nullifierHash: "0x2a8d…f91c" }, chainLength: 4, lastChange: Date.now() - 18 * 86400000, activeSignals: 0, escalationStatus: "quiet", address: "0x1d5b…40b2", trustGrade: "BA", costPerReq: 0.013, costMultiplier: 1.3, infraCost: 0.0123, valueCost: 0.0126, cer: 1.0, cerDelta: 1.0, requests: 35574, gradeHistory: ["UNRATED", "BA"], sparkline: seedSparkline(30, 8, 20) },
-  { id: 7721, name: "staging-qa-bot", chain: "Base Sepolia", worldId: { verified: true, nullifierHash: "0x91bf…3c02" }, chainLength: 12, lastChange: Date.now() - 3 * 86400000, activeSignals: 0, escalationStatus: "quiet", address: "0x1595…c703", trustGrade: "UNRATED", costPerReq: 0.010, costMultiplier: 1.0, infraCost: 0.0130, valueCost: 0.0140, cer: 1.1, cerDelta: 0.3, requests: 5413, gradeHistory: ["UNRATED"], sparkline: seedSparkline(15, 5, 20) },
-  { id: 8192, name: "ci-deploy-agent", chain: "Base mainnet", worldId: { verified: false }, chainLength: 47, lastChange: Date.now() - 120000, activeSignals: 1, escalationStatus: "notified", address: "0xe2c8…7289", trustGrade: "AAA", costPerReq: 0.005, costMultiplier: 0.5, infraCost: 0.0193, valueCost: 0.0473, cer: 2.4, cerDelta: 0.2, requests: 40515, gradeHistory: ["UNRATED", "AAA", "AAA", "AAA"], sparkline: seedSparkline(50, 6, 20) },
-  { id: 9004, name: "data-pipeline-alpha", chain: "Base Sepolia", worldId: { verified: true, nullifierHash: "0xc4e1…8a37" }, chainLength: 203, lastChange: Date.now() - 30000, activeSignals: 5, escalationStatus: "contained", address: "0x4f7a…e129", trustGrade: "A", costPerReq: 0.008, costMultiplier: 0.8, infraCost: 0.0156, valueCost: 0.0287, cer: 1.8, cerDelta: -0.5, requests: 18902, gradeHistory: ["UNRATED", "B", "BA", "A"], sparkline: seedSparkline(40, 12, 20) },
+  { id: 8192, name: "ci-deploy-agent", chain: "Base mainnet", worldId: { verified: true, nullifierHash: "0x7f3a…c891" }, chainLength: 9, lastChange: Date.now() - 4 * 60000, activeSignals: 5, escalationStatus: "contained", trustScore: 23, tier: "C", risk: "RED", route: "sandbox_only", cleanLaps: 0, changesPerMonth: 12, chainIntegrity: "valid", lastChangeDesc: "Dependency graph hash changed — plain-crypto-js@4.2.1", tierHistory: ["AAA", "AA", "BA", "C"], sparkline: seedSparkline(90, 20, 20) },
+  { id: 42069, name: "champion-agent", chain: "Base Sepolia", worldId: { verified: true, nullifierHash: "0x9e1f…d3c8" }, chainLength: 3, lastChange: Date.now() - 180 * 86400000, activeSignals: 0, escalationStatus: "quiet", trustScore: 110, tier: "AAA", risk: "GREEN", route: "prod", cleanLaps: 892, changesPerMonth: 0.1, chainIntegrity: "valid", lastChangeDesc: "Initial configuration — 180 days stable", tierHistory: ["AAA", "AAA", "AAA"], sparkline: seedSparkline(108, 2, 20) },
+  { id: 25459, name: "inference-prod", chain: "Base Sepolia", worldId: { verified: true, nullifierHash: "0x2b4d…a7f2" }, chainLength: 5, lastChange: Date.now() - 2 * 3600000, activeSignals: 1, escalationStatus: "notified", trustScore: 92, tier: "AA", risk: "YELLOW", route: "prod_throttled", cleanLaps: 45, changesPerMonth: 0.8, chainIntegrity: "valid", lastChangeDesc: "Trust score dropped 18 pts (110→92)", tierHistory: ["AAA", "AAA", "AA"], sparkline: seedSparkline(105, 8, 20) },
+  { id: 1337, name: "rogue-fork", chain: "Base Sepolia", worldId: { verified: false }, chainLength: 4, lastChange: Date.now() - 3 * 86400000, activeSignals: 2, escalationStatus: "escalated", trustScore: 0, tier: "C", risk: "RED", route: "sandbox_only", cleanLaps: 0, changesPerMonth: 15, chainIntegrity: "broken", lastChangeDesc: "Chain integrity compromised — previousHash mismatch", tierHistory: ["B", "CA", "C"], sparkline: seedSparkline(40, 18, 20) },
 ]
 
 const SIGNAL_NAMES = ["Dependency graph changed", "New outbound destination", "Credential access detected", "Subprocess spawned", "Self-modification detected"]
@@ -128,18 +129,35 @@ function signalBadge(count: number) {
   return { text: `${count}/5`, cls: "text-destructive bg-destructive/10 border-destructive/30" }
 }
 
-function gradeColor(grade: TrustGrade): string {
-  if (grade === "AAA" || grade === "AA") return "text-primary"
-  if (grade === "A" || grade === "BA") return "text-yellow-500"
-  if (grade === "B") return "text-orange-400"
-  return "text-muted-foreground"
+function tierColor(tier: TrustTier): string {
+  if (tier === "AAA" || tier === "AA" || tier === "A") return "text-primary"
+  if (tier === "BAA" || tier === "BA" || tier === "B") return "text-yellow-500"
+  return "text-destructive"
 }
 
-function gradeBg(grade: TrustGrade): string {
-  if (grade === "AAA" || grade === "AA") return "bg-primary/15 border-primary/30 text-primary"
-  if (grade === "A" || grade === "BA") return "bg-yellow-500/15 border-yellow-500/30 text-yellow-500"
-  if (grade === "B") return "bg-orange-400/15 border-orange-400/30 text-orange-400"
-  return "bg-muted border-border/40 text-muted-foreground"
+function tierBg(tier: TrustTier): string {
+  if (tier === "AAA" || tier === "AA" || tier === "A") return "bg-primary/15 border-primary/30 text-primary"
+  if (tier === "BAA" || tier === "BA" || tier === "B") return "bg-yellow-500/15 border-yellow-500/30 text-yellow-500"
+  return "bg-destructive/15 border-destructive/30 text-destructive"
+}
+
+function riskBg(risk: Risk): string {
+  if (risk === "GREEN") return "bg-primary/15 border-primary/30 text-primary"
+  if (risk === "YELLOW") return "bg-yellow-500/15 border-yellow-500/30 text-yellow-500"
+  return "bg-destructive/15 border-destructive/30 text-destructive"
+}
+
+function routeLabel(route: Route): string {
+  if (route === "prod") return "PROD"
+  if (route === "prod_throttled") return "THROTTLED"
+  if (route === "sandbox") return "SANDBOX"
+  return "QUARANTINED"
+}
+
+function routeBg(route: Route): string {
+  if (route === "prod") return "bg-primary/15 border-primary/30 text-primary"
+  if (route === "prod_throttled") return "bg-yellow-500/15 border-yellow-500/30 text-yellow-500"
+  return "bg-destructive/15 border-destructive/30 text-destructive"
 }
 
 function Sparkline({ data, color, width = 120, height = 32 }: { data: number[]; color: string; width?: number; height?: number }) {
@@ -159,76 +177,86 @@ function Sparkline({ data, color, width = 120, height = 32 }: { data: number[]; 
 }
 
 function AgentCard({ agent, isSelected, onSelect }: { agent: FleetAgent; isSelected: boolean; onSelect: (id: number) => void }) {
-  const [liveRequests, setLiveRequests] = useState(agent.requests)
+  const [liveCleanLaps, setLiveCleanLaps] = useState(agent.cleanLaps)
   const [liveSparkline, setLiveSparkline] = useState(agent.sparkline)
 
   useEffect(() => {
     const interval = setInterval(() => {
-      const delta = Math.floor(Math.random() * 12) + 1
-      setLiveRequests((prev) => prev + delta)
+      if (agent.risk === "GREEN") setLiveCleanLaps((prev) => prev + 1)
       setLiveSparkline((prev) => {
-        const next = [...prev.slice(1), prev[prev.length - 1] + (Math.random() - 0.45) * 8]
-        return next
+        const last = prev[prev.length - 1]
+        const jitter = agent.risk === "RED" ? (Math.random() - 0.6) * 12 : (Math.random() - 0.4) * 3
+        return [...prev.slice(1), Math.max(0, Math.min(110, last + jitter))]
       })
-    }, 1500 + Math.random() * 1000)
+    }, 2000 + Math.random() * 1000)
     return () => clearInterval(interval)
-  }, [])
+  }, [agent.risk])
 
   const sig = signalBadge(agent.activeSignals)
-  const sparkColor = agent.activeSignals >= 3 ? "oklch(0.577 0.245 27.325)" : agent.activeSignals >= 1 ? "#eab308" : "oklch(0.75 0.18 160)"
-  const borderAccent = agent.activeSignals >= 3 ? "border-b-destructive" : agent.activeSignals >= 1 ? "border-b-yellow-500" : "border-b-primary"
+  const sparkColor = agent.risk === "RED" ? "oklch(0.577 0.245 27.325)" : agent.risk === "YELLOW" ? "#eab308" : "oklch(0.75 0.18 160)"
+  const borderAccent = agent.risk === "RED" ? "border-b-destructive" : agent.risk === "YELLOW" ? "border-b-yellow-500" : "border-b-primary"
+  const scoreColor = agent.trustScore >= 80 ? "text-primary" : agent.trustScore >= 40 ? "text-yellow-500" : "text-destructive"
 
   return (
-    <div
-      onClick={() => onSelect(agent.id)}
+    <div onClick={() => onSelect(agent.id)}
       className={cn(
         "relative overflow-hidden rounded-2xl border border-border/30 glass-panel noise-bg cursor-pointer transition-all duration-300 hover:border-primary/20 border-b-2",
-        borderAccent,
-        isSelected && "ring-1 ring-primary/30 border-primary/20"
-      )}
-    >
+        borderAccent, isSelected && "ring-1 ring-primary/30 border-primary/20"
+      )}>
       <div className="relative z-10 p-5">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2 min-w-0">
-            <span className="text-xs font-mono text-muted-foreground truncate"># {agent.address}</span>
+            <span className="text-sm font-mono text-primary font-semibold">#{agent.id}</span>
+            <span className="text-xs text-muted-foreground truncate">{agent.name}</span>
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
-            <span className={cn("inline-flex px-2 py-0.5 rounded text-[10px] font-mono font-bold border", sig.cls)}>{sig.text}</span>
-            <span className={cn("inline-flex px-2 py-0.5 rounded text-[10px] font-mono font-bold border", gradeBg(agent.trustGrade))}>{agent.trustGrade}</span>
+            <span className={cn("inline-flex px-2 py-0.5 rounded text-[10px] font-mono font-bold border", routeBg(agent.route))}>{routeLabel(agent.route)}</span>
+            <span className={cn("inline-flex px-2 py-0.5 rounded text-[10px] font-mono font-bold border", tierBg(agent.tier))}>{agent.tier}</span>
           </div>
         </div>
 
         <div className="flex items-baseline justify-between mb-1">
-          <div className="flex items-baseline gap-2">
-            <span className={cn("text-2xl font-bold font-mono", gradeColor(agent.trustGrade))}>{agent.costMultiplier}x</span>
-            <span className="text-xs text-muted-foreground">${agent.costPerReq.toFixed(4)} / req</span>
+          <div className="flex items-baseline gap-1.5">
+            <span className={cn("text-3xl font-bold font-mono", scoreColor)}>{agent.trustScore}</span>
+            <span className="text-[10px] font-mono text-muted-foreground uppercase">Trust</span>
           </div>
           <div className="text-right">
-            <span className={cn("text-lg font-bold font-mono", agent.cer >= 1.5 ? "text-primary" : agent.cer >= 1.0 ? "text-yellow-500" : "text-destructive")}>{agent.cer}x</span>
-            <span className="text-[10px] font-mono text-muted-foreground ml-1">CER</span>
+            <span className={cn("inline-flex px-2 py-0.5 rounded text-[10px] font-mono font-bold border", sig.cls)}>{sig.text}</span>
+            <span className="text-[10px] font-mono text-muted-foreground ml-1">signals</span>
           </div>
         </div>
 
-        <div className="flex items-center justify-between text-[10px] font-mono text-muted-foreground/60 mb-4">
-          <span>${agent.infraCost.toFixed(4)} infra/call | ${agent.valueCost.toFixed(4)} value/call</span>
-          <span className={cn(agent.cerDelta >= 0 ? "text-primary" : "text-destructive")}>{agent.cerDelta >= 0 ? "+" : ""}{agent.cerDelta.toFixed(1)}%</span>
+        <div className="flex items-center gap-3 text-[10px] font-mono text-muted-foreground/60 mb-4">
+          <span>Chain: {agent.chainLength} blocks</span>
+          <span>·</span>
+          <span>{agent.chainIntegrity === "valid" ? "✓ Valid" : "✗ Broken"}</span>
+          <span>·</span>
+          <span>{agent.chain}</span>
         </div>
 
         <div className="flex items-end justify-between mb-4">
           <div>
-            <span className="text-[10px] font-mono uppercase tracking-[0.15em] text-muted-foreground">Requests</span>
-            <p className="text-xl font-bold font-mono text-foreground">{liveRequests.toLocaleString()}</p>
+            <span className="text-[10px] font-mono uppercase tracking-[0.15em] text-muted-foreground">Clean Laps</span>
+            <p className="text-xl font-bold font-mono text-foreground">{liveCleanLaps.toLocaleString()}</p>
           </div>
           <Sparkline data={liveSparkline} color={sparkColor} />
         </div>
 
+        <div className="flex items-center justify-between text-[10px] font-mono text-muted-foreground/50 mb-4">
+          <span>{agent.changesPerMonth}/mo changes</span>
+          <span>{agent.worldId.verified ? `✓ World ID: ${agent.worldId.nullifierHash}` : "No World ID"}</span>
+        </div>
+
         <div className="pt-3 border-t border-border/20">
-          <span className="text-[10px] font-mono uppercase tracking-[0.15em] text-muted-foreground">Grade History</span>
-          <div className="flex items-center gap-1.5 mt-1.5">
-            {agent.gradeHistory.map((g, i) => (
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-[10px] font-mono uppercase tracking-[0.15em] text-muted-foreground">Tier History</span>
+            <span className={cn("text-[10px] font-mono", escalationColor(agent.escalationStatus))}>{agent.escalationStatus}</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            {agent.tierHistory.map((t, i) => (
               <span key={i} className="flex items-center gap-1">
                 {i > 0 && <span className="text-muted-foreground/30 text-[10px]">→</span>}
-                <span className={cn("text-[10px] font-mono font-bold px-1.5 py-0.5 rounded border", gradeBg(g))}>{g}</span>
+                <span className={cn("text-[10px] font-mono font-bold px-1.5 py-0.5 rounded border", tierBg(t))}>{t}</span>
               </span>
             ))}
           </div>
