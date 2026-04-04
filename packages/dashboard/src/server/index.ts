@@ -19,10 +19,8 @@ import {
   getOnChainProfile,
 } from './on-chain.js';
 
-const LIVE_AGENT = 3458;
-
 function isLiveAgent(agentId: number): boolean {
-  return agentId === LIVE_AGENT;
+  return agentId > 0;
 }
 
 export const app = new Hono();
@@ -112,8 +110,12 @@ app.get('/api/agents/:agentId/chain/verify', async (c) => {
 // GET /api/agents/:agentId/drift — drift alert history
 // -------------------------------------------------------------------------
 app.get('/api/agents/:agentId/drift', (c) => {
-  const agent = getAgent(Number(c.req.param('agentId')));
-  if (!agent) return c.json({ error: 'Agent not found' }, 404);
+  const agentId = Number(c.req.param('agentId'));
+  const agent = getAgent(agentId);
+
+  if (!agent) {
+    return c.json({ agentId, alerts: [], totalAlerts: 0 });
+  }
 
   return c.json({
     agentId: agent.agentId,
@@ -177,29 +179,17 @@ app.get('/api/agents/:agentId/profile', async (c) => {
 app.get('/api/agents/:agentId/delegation', (c) => {
   const agentId = Number(c.req.param('agentId'));
 
-  if (isLiveAgent(agentId)) {
+  const agent = getAgent(agentId);
+  if (agent?.delegation) {
     return c.json({
-      agentId,
+      agentId: agent.agentId,
       delegated: true,
-      humanNullifierHash:
-        '0x2c762ca9a7408c4ad70c7456f220387dd7036e61d47c41b9e94ef4764b9381b3',
-      delegationTimestamp: Date.now() - 7 * 86_400_000,
+      humanNullifierHash: agent.delegation.humanNullifierHash,
+      delegationTimestamp: agent.delegation.delegationTimestamp,
     });
   }
 
-  const agent = getAgent(agentId);
-  if (!agent) return c.json({ error: 'Agent not found' }, 404);
-
-  if (!agent.delegation) {
-    return c.json({ agentId: agent.agentId, delegated: false });
-  }
-
-  return c.json({
-    agentId: agent.agentId,
-    delegated: true,
-    humanNullifierHash: agent.delegation.humanNullifierHash,
-    delegationTimestamp: agent.delegation.delegationTimestamp,
-  });
+  return c.json({ agentId, delegated: false });
 });
 
 // -------------------------------------------------------------------------

@@ -18,6 +18,7 @@
     "@behaviorchain/drift": "file:../drift",
     "@behaviorchain/sdk": "file:../sdk",
     "@hono/node-server": "^1.0.0",
+    "@worldcoin/idkit": "^4.0.11",
     "dotenv": "^17.4.0",
     "ethers": "^6.16.0",
     "hono": "^4.0.0",

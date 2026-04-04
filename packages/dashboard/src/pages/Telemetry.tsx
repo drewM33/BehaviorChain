@@ -174,20 +174,23 @@ export function Telemetry() {
 
       {/* Delegation info */}
       {data.delegation && (
-        <div className="bg-surface border border-chain/20 rounded-lg p-4" data-testid="delegation-info">
-          <div className="flex items-center gap-3">
+        <div className="bg-surface border border-chain/20 rounded-lg p-5" data-testid="delegation-info">
+          <div className="flex items-center gap-3 mb-3">
             <span className="text-chain text-lg">✓</span>
-            <div>
-              <p className="text-sm font-semibold text-white">
-                Human Delegator (World ID)
-              </p>
-              <p className="text-xs text-neutral-400 font-mono mt-0.5">
-                Nullifier: {data.delegation.humanNullifierHash.slice(0, 8)}…{data.delegation.humanNullifierHash.slice(-4)}
-              </p>
-              <p className="text-xs text-neutral-500 mt-0.5">
-                Delegated {timeAgo(data.delegation.delegationTimestamp)}
-              </p>
-            </div>
+            <p className="text-sm font-semibold text-white">
+              Human Delegator (World ID)
+            </p>
+            <span className="text-xs text-neutral-500 ml-auto">
+              Delegated {timeAgo(data.delegation.delegationTimestamp)}
+            </span>
+          </div>
+          <div className="bg-bg rounded border border-surface-border p-3">
+            <p className="text-[10px] uppercase tracking-wider text-neutral-500 mb-1">
+              Nullifier Hash
+            </p>
+            <p className="text-xs text-chain font-mono break-all select-all leading-relaxed">
+              {data.delegation.humanNullifierHash}
+            </p>
           </div>
         </div>
       )}
