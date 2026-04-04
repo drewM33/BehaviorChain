@@ -160,3 +160,22 @@ A `DriftAlert` contains:
 | `BEHAVIORCHAIN_WEBSOCKET_PORT` | No | — | Port for SSE drift alert stream |
 | `BEHAVIORCHAIN_DASHBOARD_PORT` | No | `3000` | Dashboard server port |
 | `BEHAVIORCHAIN_VALIRON_WEBHOOK_SECRET` | No | — | Shared secret for webhook validation |
+
+### Switching to Base mainnet
+
+All packages read `BEHAVIORCHAIN_CHAIN_ID` to determine which network to target. Set the following to run on mainnet:
+
+```bash
+export BEHAVIORCHAIN_CHAIN_ID=8453
+export BEHAVIORCHAIN_RPC_URL="https://mainnet.base.org"
+export BEHAVIORCHAIN_CONTRACT_ADDRESS="<mainnet-contract-address>"
+```
+
+For frontend/dashboard, also set the client-side env var:
+
+```bash
+NEXT_PUBLIC_CHAIN_ID=8453    # Next.js frontend
+VITE_CHAIN_ID=8453           # Dashboard (Vite)
+```
+
+The SDK, drift engine, pipeline, scripts, frontend, and dashboard all derive explorer URLs, chain names, and RPC defaults from the chain ID automatically via `getNetworkConfig()` from `@behaviorchain/sdk`.

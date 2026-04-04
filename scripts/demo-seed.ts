@@ -2,7 +2,7 @@ import path from 'path';
 import { ethers } from 'ethers';
 import { config as dotenvConfig } from 'dotenv';
 import { ValironSDK } from '@valiron/sdk';
-import { BehaviorChainSDK, type CommitResult } from '@behaviorchain/sdk';
+import { BehaviorChainSDK, type CommitResult, explorerTxUrl } from '@behaviorchain/sdk';
 
 // Load .env from root first; vars already set won't be overwritten by the fallback
 dotenvConfig({ path: path.resolve(__dirname, '..', '.env') });
@@ -38,8 +38,10 @@ function loadEnv() {
   };
 }
 
+const chainId = Number(process.env.BEHAVIORCHAIN_CHAIN_ID ?? '84532');
+
 function basescanLink(txHash: string): string {
-  return `https://sepolia.basescan.org/tx/${txHash}`;
+  return explorerTxUrl(chainId, txHash);
 }
 
 function sleep(ms: number): Promise<void> {

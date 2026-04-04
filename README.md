@@ -45,9 +45,9 @@ import { BehaviorChainSDK } from '@behaviorchain/sdk';
 import { ValironSDK } from '@valiron/sdk';
 
 const sdk = new BehaviorChainSDK({
-  rpcUrl: 'https://sepolia.base.org',
+  rpcUrl: process.env.BEHAVIORCHAIN_RPC_URL!,       // https://mainnet.base.org or https://sepolia.base.org
   privateKey: process.env.BEHAVIORCHAIN_PRIVATE_KEY!,
-  contractAddress: '0xDe27DF9DA6BaD0b172F3F1b48CEe818dFE4487CD',
+  contractAddress: process.env.BEHAVIORCHAIN_CONTRACT_ADDRESS!,
   valiron: new ValironSDK({ chain: 'base' }),
 });
 
@@ -59,10 +59,27 @@ See the [full quickstart](docs/README.md) for a complete walkthrough.
 
 ## Deployments
 
-| Network | Chain ID | Contract |
-|---------|----------|----------|
-| Base Sepolia | 84532 | `0xDe27DF9DA6BaD0b172F3F1b48CEe818dFE4487CD` |
-| Base Mainnet | 8453 | Deploy: `npx hardhat run scripts/deploy.ts --network base` |
+| Network | Chain ID | Contract | `BEHAVIORCHAIN_CHAIN_ID` |
+|---------|----------|----------|--------------------------|
+| Base Sepolia | 84532 | `0xDe27DF9DA6BaD0b172F3F1b48CEe818dFE4487CD` | `84532` (default) |
+| Base Mainnet | 8453 | Deploy: `npm run deploy:base` in `packages/contracts` | `8453` |
+
+### Switching networks
+
+Set these environment variables to target mainnet instead of testnet:
+
+```bash
+BEHAVIORCHAIN_CHAIN_ID=8453
+BEHAVIORCHAIN_RPC_URL=https://mainnet.base.org
+BEHAVIORCHAIN_CONTRACT_ADDRESS=<mainnet-address-after-deploy>
+```
+
+For frontend apps, also set:
+
+```bash
+NEXT_PUBLIC_CHAIN_ID=8453          # Next.js frontend
+VITE_CHAIN_ID=8453                 # Dashboard (Vite)
+```
 
 ## Documentation
 

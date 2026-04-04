@@ -1,11 +1,11 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useWallet } from '../context/WalletContext';
+import { networkConfig } from '../config/network';
 
 const IDENTITY_REGISTRY = '0x8004A818BFB912233c491871b3d84c89A494BD9e';
-const SNAPSHOT_REGISTRY = '0xDe27DF9DA6BaD0b172F3F1b48CEe818dFE4487CD';
-const BASE_SEPOLIA_CHAIN_ID = '0x14a34';
-const BASESCAN_TX = 'https://sepolia.basescan.org/tx/';
+const SNAPSHOT_REGISTRY = process.env.BEHAVIORCHAIN_CONTRACT_ADDRESS ?? '0xDe27DF9DA6BaD0b172F3F1b48CEe818dFE4487CD';
+const BASESCAN_TX = `${networkConfig.explorerUrl}/tx/`;
 
 const BALANCE_OF_ABI = ['function balanceOf(address owner) view returns (uint256)'];
 const TOKEN_BY_INDEX_ABI = ['function tokenOfOwnerByIndex(address owner, uint256 index) view returns (uint256)'];
@@ -36,26 +36,26 @@ function getEthereum(): any {
   return (window as any).ethereum;
 }
 
-async function ensureBaseSepolia(): Promise<void> {
+async function ensureCorrectChain(): Promise<void> {
   const ethereum = getEthereum();
   const chainId = await ethereum.request({ method: 'eth_chainId' });
-  if (chainId === BASE_SEPOLIA_CHAIN_ID) return;
+  if (chainId === networkConfig.chainIdHex) return;
 
   try {
     await ethereum.request({
       method: 'wallet_switchEthereumChain',
-      params: [{ chainId: BASE_SEPOLIA_CHAIN_ID }],
+      params: [{ chainId: networkConfig.chainIdHex }],
     });
   } catch (switchError: any) {
     if (switchError.code === 4902) {
       await ethereum.request({
         method: 'wallet_addEthereumChain',
         params: [{
-          chainId: BASE_SEPOLIA_CHAIN_ID,
-          chainName: 'Base Sepolia',
+          chainId: networkConfig.chainIdHex,
+          chainName: networkConfig.name,
           nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
-          rpcUrls: ['https://sepolia.base.org'],
-          blockExplorerUrls: ['https://sepolia.basescan.org'],
+          rpcUrls: [networkConfig.rpcUrl],
+          blockExplorerUrls: [networkConfig.explorerUrl],
         }],
       });
     } else {
@@ -86,13 +86,13 @@ function friendlyError(err: any): string {
   if (msg.includes('user rejected') || msg.includes('ACTION_REJECTED'))
     return 'Transaction cancelled — you rejected the request in your wallet.';
   if (msg.includes('insufficient funds') || msg.includes('INSUFFICIENT_FUNDS'))
-    return 'Transaction failed — check your Base Sepolia ETH balance.';
+    return `Transaction failed — check your ${networkConfig.name} ETH balance.`;
   if (msg.includes('nonce'))
     return 'Transaction failed — nonce conflict. Try resetting your wallet activity.';
   if (msg.includes('CALL_EXCEPTION') || msg.includes('execution reverted'))
-    return 'Transaction failed — the contract reverted. Check your Base Sepolia ETH balance.';
+    return `Transaction failed — the contract reverted. Check your ${networkConfig.name} ETH balance.`;
   if (msg.includes('network') || msg.includes('could not detect'))
-    return 'Network error — make sure you are connected to Base Sepolia.';
+    return `Network error — make sure you are connected to ${networkConfig.name}.`;
   if (msg.length > 120)
     return msg.slice(0, 120) + '…';
   return msg || 'Something went wrong. Please try again.';
@@ -316,7 +316,7 @@ export function GetStarted() {
     try {
       setLoading(true);
       updateStep(1, { error: undefined });
-      await ensureBaseSepolia();
+      await ensureCorrectChain();
 
       const agentCard = {
         name: 'BehaviorChain Agent',
@@ -357,7 +357,7 @@ export function GetStarted() {
     try {
       setLoading(true);
       updateStep(3, { error: undefined });
-      await ensureBaseSepolia();
+      await ensureCorrectChain();
 
       const { ethers } = await import('ethers');
       const timestamp = Math.floor(Date.now() / 1000);
@@ -464,9 +464,9 @@ export function GetStarted() {
         <div className="p-4 rounded-xl bg-status-yellow/10 border border-status-yellow/30 flex items-start gap-3">
           <span className="text-status-yellow text-lg mt-0.5">⚠</span>
           <div>
-            <p className="text-sm font-medium text-status-yellow">No Base Sepolia ETH</p>
+            <p className="text-sm font-medium text-status-yellow">No {networkConfig.name} ETH</p>
             <p className="text-xs text-neutral-400 mt-1">
-              You need ETH on Base Sepolia to register and commit snapshots.{' '}
+              You need ETH on {networkConfig.name} to register and commit snapshots.{' '}
               <a
                 href="https://www.alchemy.com/faucets/base-sepolia"
                 target="_blank"
@@ -510,7 +510,7 @@ export function GetStarted() {
         ) : (
           <div className="space-y-3">
             <p className="text-sm text-neutral-400">
-              Mint your ERC-8004 agent identity on Base Sepolia. This creates your on-chain agent NFT.
+              Mint your ERC-8004 agent identity on {networkConfig.name}. This creates your on-chain agent NFT.
             </p>
             <button
               onClick={registerAgent}
@@ -518,7 +518,7 @@ export function GetStarted() {
               className="px-6 py-3 bg-chain hover:bg-chain/80 disabled:opacity-50 text-white font-semibold rounded-lg transition-colors flex items-center gap-2"
             >
               {loading ? <Spinner /> : null}
-              Register agent on Base Sepolia
+              Register agent on {networkConfig.name}
             </button>
             {registerTxHash && (
               <p className="text-xs text-neutral-500 font-mono">

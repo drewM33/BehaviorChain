@@ -15,3 +15,11 @@ export {
   BASE_MAINNET_CONTRACT,
   DEFAULT_CONTRACT_ADDRESS,
 } from './types.js';
+export {
+  type NetworkConfig,
+  NETWORK_CONFIG,
+  getNetworkConfig,
+  explorerTxUrl,
+  explorerAddressUrl,
+  explorerBlockUrl,
+} from './network.js';

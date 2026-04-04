@@ -2,9 +2,13 @@ import path from 'path';
 import fs from 'fs';
 import { ethers } from 'ethers';
 import { config as dotenvConfig } from 'dotenv';
+import { getNetworkConfig, explorerTxUrl } from '@behaviorchain/sdk';
 
 dotenvConfig({ path: path.resolve(__dirname, '..', '.env') });
 dotenvConfig({ path: path.resolve(__dirname, '..', 'packages', 'contracts', '.env') });
+
+const chainId = Number(process.env.BEHAVIORCHAIN_CHAIN_ID ?? '84532');
+const networkConfig = getNetworkConfig(chainId);
 
 const IDENTITY_REGISTRY = '0x8004A818BFB912233c491871b3d84c89A494BD9e';
 
@@ -51,7 +55,7 @@ async function main() {
   const balance = await provider.getBalance(address);
   console.log(`  Balance:  ${ethers.formatEther(balance)} ETH`);
   if (balance === 0n) {
-    console.error('\n✗ Wallet has no ETH. Fund it with Base Sepolia ETH first.');
+    console.error(`\n✗ Wallet has no ETH. Fund it with ${networkConfig.name} ETH first.`);
     process.exit(1);
   }
 
@@ -89,7 +93,7 @@ async function main() {
   console.log('═══════════════════════════════════════════════');
   console.log(`  Agent ID:  ${agentId}`);
   console.log(`  Tx Hash:   ${tx.hash}`);
-  console.log(`  BaseScan:  https://sepolia.basescan.org/tx/${tx.hash}`);
+  console.log(`  BaseScan:  ${explorerTxUrl(chainId, tx.hash)}`);
   console.log('═══════════════════════════════════════════════');
 
   const rootEnv = path.resolve(__dirname, '..', '.env');

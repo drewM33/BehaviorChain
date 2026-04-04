@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { DriftAlert } from '@behaviorchain/drift';
+import { networkConfig } from '../config/network';
 
 interface ChainNode {
   index: number;
@@ -127,7 +128,7 @@ export function HashChainViz({ chain, driftAlerts }: HashChainVizProps) {
               <div>
                 <span className="text-neutral-500">Tx </span>
                 <a
-                  href={`https://sepolia.basescan.org/tx/${selectedNode.txHash}`}
+                  href={`${networkConfig.explorerUrl}/tx/${selectedNode.txHash}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-chain hover:underline"
@@ -140,7 +141,7 @@ export function HashChainViz({ chain, driftAlerts }: HashChainVizProps) {
               <div>
                 <span className="text-neutral-500">Block </span>
                 <a
-                  href={`https://sepolia.basescan.org/block/${selectedNode.blockNumber}`}
+                  href={`${networkConfig.explorerUrl}/block/${selectedNode.blockNumber}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-chain hover:underline"

@@ -21,8 +21,6 @@ import {
   createAgentBookVerifier,
 } from '@worldcoin/agentkit';
 
-const agentBook = createAgentBookVerifier({ network: 'base-sepolia' });
-
 export class BehaviorChainPipeline {
   private valiron: IValironSDK;
   private sdk: IBehaviorChainSDK;
@@ -33,6 +31,7 @@ export class BehaviorChainPipeline {
   private retryIntervalMs: number;
   private maxRetries: number;
   private webhookPort: number;
+  private chainId: number;
 
   private retryQueue: RetryEntry[] = [];
   private retryTimer: ReturnType<typeof setInterval> | null = null;
@@ -65,6 +64,7 @@ export class BehaviorChainPipeline {
     this.retryIntervalMs = config.retryIntervalMs ?? 10_000;
     this.maxRetries = config.maxRetries ?? 5;
     this.webhookPort = config.webhookPort ?? 3002;
+    this.chainId = config.chainId ?? Number(process.env.BEHAVIORCHAIN_CHAIN_ID ?? '84532');
 
     this.onCommit = config.onCommit;
     this.onSkip = config.onSkip;
@@ -352,6 +352,9 @@ export class BehaviorChainPipeline {
           const parsed = parseAgentkitHeader(agentkitHeader);
           await validateAgentkitMessage(parsed, c.req.url);
           await verifyAgentkitSignature(parsed);
+          const agentBook = createAgentBookVerifier({
+            network: this.chainId === 8453 ? 'base' : 'base-sepolia',
+          });
           const human = await agentBook.lookupHuman(parsed.address, parsed.chainId);
           if (human) {
             humanNullifierHash = human.nullifierHash;

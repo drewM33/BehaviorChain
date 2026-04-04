@@ -5,7 +5,8 @@
   "scripts": {
     "compile": "hardhat compile",
     "test": "hardhat test",
-    "deploy:base-sepolia": "hardhat run scripts/deploy.ts --network baseSepolia"
+    "deploy:base-sepolia": "hardhat run scripts/deploy.ts --network baseSepolia",
+    "deploy:base": "hardhat run scripts/deploy.ts --network base"
   },
   "keywords": [
     "erc-8004",

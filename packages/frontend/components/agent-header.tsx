@@ -2,6 +2,7 @@
 
 import { ExternalLink, Loader2 } from "lucide-react"
 import { useAgent } from "@/lib/agent-context"
+import { networkConfig, BEHAVIOR_SNAPSHOT_REGISTRY } from "@/lib/contract"
 
 const agents = ["3458", "42", "43", "44", "45", "46", "47"]
 
@@ -56,7 +57,7 @@ export function AgentHeader() {
           </div>
         </div>
         <a
-          href={`https://sepolia.basescan.org/address/${process.env.NEXT_PUBLIC_CONTRACT_ADDRESS ?? "0xDe27DF9DA6BaD0b172F3F1b48CEe818dFE4487CD"}`}
+          href={`${networkConfig.explorerUrl}/address/${BEHAVIOR_SNAPSHOT_REGISTRY}`}
           target="_blank"
           rel="noopener noreferrer"
           className="hidden items-center gap-2 text-xs font-medium text-muted-foreground transition-all duration-300 hover:text-primary group sm:flex"

@@ -45,6 +45,8 @@ export interface BehaviorChainPipelineConfig {
   behaviorchain: IBehaviorChainSDK;
   driftEngine?: IDriftEngine;
   agentKit?: IAgentKitProvider;
+  /** Chain ID — 8453 for Base mainnet, 84532 for Base Sepolia (default). */
+  chainId?: number;
   /** Port for the webhook + trust-signal HTTP server (default: 3002). */
   webhookPort?: number;
   /** Shared secret to validate incoming Valiron webhooks. */

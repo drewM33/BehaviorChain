@@ -1,31 +1,30 @@
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
-
-const BASE_SEPOLIA_CHAIN_ID = '0x14a34';
+import { networkConfig } from '../config/network';
 
 function getEthereum(): any {
   return (window as any).ethereum;
 }
 
-async function ensureBaseSepolia(): Promise<void> {
+async function ensureCorrectChain(): Promise<void> {
   const ethereum = getEthereum();
   const chainId = await ethereum.request({ method: 'eth_chainId' });
-  if (chainId === BASE_SEPOLIA_CHAIN_ID) return;
+  if (chainId === networkConfig.chainIdHex) return;
 
   try {
     await ethereum.request({
       method: 'wallet_switchEthereumChain',
-      params: [{ chainId: BASE_SEPOLIA_CHAIN_ID }],
+      params: [{ chainId: networkConfig.chainIdHex }],
     });
   } catch (switchError: any) {
     if (switchError.code === 4902) {
       await ethereum.request({
         method: 'wallet_addEthereumChain',
         params: [{
-          chainId: BASE_SEPOLIA_CHAIN_ID,
-          chainName: 'Base Sepolia',
+          chainId: networkConfig.chainIdHex,
+          chainName: networkConfig.name,
           nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
-          rpcUrls: ['https://sepolia.base.org'],
-          blockExplorerUrls: ['https://sepolia.basescan.org'],
+          rpcUrls: [networkConfig.rpcUrl],
+          blockExplorerUrls: [networkConfig.explorerUrl],
         }],
       });
     } else {
@@ -78,7 +77,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 
     setConnecting(true);
     try {
-      await ensureBaseSepolia();
+      await ensureCorrectChain();
       const accounts: string[] = await ethereum.request({ method: 'eth_requestAccounts' });
       const addr = accounts[0];
       setAddress(addr);

@@ -1,6 +1,7 @@
 import path from 'path';
 import { ethers } from 'ethers';
 import { config as dotenvConfig } from 'dotenv';
+import { explorerTxUrl } from '@behaviorchain/sdk';
 
 dotenvConfig({ path: path.resolve(__dirname, '..', '.env') });
 dotenvConfig({ path: path.resolve(__dirname, '..', 'packages', 'contracts', '.env') });
@@ -33,8 +34,10 @@ function loadEnv() {
   };
 }
 
+const chainId = Number(process.env.BEHAVIORCHAIN_CHAIN_ID ?? '84532');
+
 function basescanLink(txHash: string): string {
-  return `https://sepolia.basescan.org/tx/${txHash}`;
+  return explorerTxUrl(chainId, txHash);
 }
 
 function snapshotHash(index: number): string {
