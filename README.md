@@ -62,7 +62,7 @@ See the [full quickstart](docs/README.md) for a complete walkthrough.
 | Network | Chain ID | Contract | `BEHAVIORCHAIN_CHAIN_ID` |
 |---------|----------|----------|--------------------------|
 | Base Sepolia | 84532 | `0xDe27DF9DA6BaD0b172F3F1b48CEe818dFE4487CD` | `84532` (default) |
-| Base Mainnet | 8453 | Deploy: `npm run deploy:base` in `packages/contracts` | `8453` |
+| Base Mainnet | 8453 | `0x2Dd0946Be048e7B61E2995bdDE97860427e74562` | `8453` |
 
 ### Switching networks
 
@@ -71,7 +71,7 @@ Set these environment variables to target mainnet instead of testnet:
 ```bash
 BEHAVIORCHAIN_CHAIN_ID=8453
 BEHAVIORCHAIN_RPC_URL=https://mainnet.base.org
-BEHAVIORCHAIN_CONTRACT_ADDRESS=<mainnet-address-after-deploy>
+BEHAVIORCHAIN_CONTRACT_ADDRESS=0x2Dd0946Be048e7B61E2995bdDE97860427e74562
 ```
 
 For frontend apps, also set:

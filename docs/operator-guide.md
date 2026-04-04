@@ -168,7 +168,7 @@ All packages read `BEHAVIORCHAIN_CHAIN_ID` to determine which network to target.
 ```bash
 export BEHAVIORCHAIN_CHAIN_ID=8453
 export BEHAVIORCHAIN_RPC_URL="https://mainnet.base.org"
-export BEHAVIORCHAIN_CONTRACT_ADDRESS="<mainnet-contract-address>"
+export BEHAVIORCHAIN_CONTRACT_ADDRESS="0x2Dd0946Be048e7B61E2995bdDE97860427e74562"
 ```
 
 For frontend/dashboard, also set the client-side env var:
