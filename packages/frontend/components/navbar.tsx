@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Radio, Square, Flag } from "lucide-react"
+import { WorldIdButton } from "./world-id-button"
 
 const navItems = [
   { href: "/agent/8192", label: "Control Panel", icon: Radio },
@@ -56,7 +57,8 @@ export function Navbar() {
           })}
         </nav>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
+          <WorldIdButton />
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <div className="relative h-2 w-2">
               <span className="absolute inset-0 rounded-full bg-primary animate-ping opacity-40" />

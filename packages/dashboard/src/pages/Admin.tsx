@@ -750,7 +750,7 @@ function EscalationPanel({
   return (
     <div className="bg-surface border border-surface-border rounded-lg p-6">
       <div className="flex items-center justify-between mb-5">
-        <h3 className="text-sm font-semibold text-neutral-400 uppercase tracking-wider">Escalation Policy</h3>
+        <h3 className="text-lg font-bold text-white tracking-tight">Create Escalation Policy</h3>
         <div className="flex items-center gap-2">
           <span className="text-xs text-neutral-500 font-mono">
             {activeSignalCount}/5 signals active

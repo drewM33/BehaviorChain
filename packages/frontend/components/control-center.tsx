@@ -331,7 +331,7 @@ function EscalationPanel({ tiers, activeSignalCount, onActionChange, onInputChan
     <div className="relative overflow-hidden rounded-2xl border border-border/30 glass-panel p-6 noise-bg">
       <div className="relative z-10">
         <div className="flex items-center justify-between mb-5">
-          <h3 className="text-[10px] font-mono uppercase tracking-[0.2em] text-muted-foreground">Escalation Policy</h3>
+          <h3 className="text-lg font-bold tracking-tight text-foreground">Create Escalation Policy</h3>
           <div className="flex items-center gap-2">
             <span className="text-xs text-muted-foreground font-mono">{activeSignalCount}/5 signals active</span>
             {activeSignalCount > 0 && (
