@@ -5,3 +5,6 @@ typechain-types
 coverage
 dist
 .env
+.cursor/
+*.tsbuildinfo
+.next/
