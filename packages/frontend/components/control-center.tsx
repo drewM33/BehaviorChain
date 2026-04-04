@@ -364,7 +364,7 @@ function EscalationPanel({ tiers, activeSignalCount, onActionChange, onInputChan
             const isActive = tier.tier <= activeSignalCount
             const color = tier.tier <= 2 ? "yellow" : "red"
             return (
-              <div key={tier.tier} className={cn("rounded-xl border transition-all duration-500 overflow-hidden",
+              <div key={tier.tier} data-tier={tier.tier} className={cn("rounded-xl border transition-all duration-500 overflow-hidden",
                 isActive
                   ? color === "yellow" ? "border-l-4 border-l-yellow-500 border-yellow-500/30 bg-yellow-500/5" : "border-l-4 border-l-destructive border-destructive/30 bg-destructive/5"
                   : "border-border/30 bg-background/40 hover:bg-primary/[0.02]"
@@ -429,8 +429,11 @@ function EscalationPanel({ tiers, activeSignalCount, onActionChange, onInputChan
 }
 
 function AuditLog({ entries }: { entries: AuditEntry[] }) {
-  const bottomRef = useRef<HTMLDivElement>(null)
-  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }) }, [entries.length])
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const container = scrollContainerRef.current
+    if (container) container.scrollTo({ top: container.scrollHeight, behavior: "smooth" })
+  }, [entries.length])
 
   return (
     <div className="relative overflow-hidden rounded-2xl border border-border/30 glass-panel noise-bg">
@@ -444,7 +447,7 @@ function AuditLog({ entries }: { entries: AuditEntry[] }) {
           <p className="text-[10px] text-muted-foreground/30 mt-1">Run a simulation to generate audit trail</p>
         </div>
       ) : (
-        <div className="relative z-10 max-h-[320px] overflow-y-auto">
+        <div ref={scrollContainerRef} className="relative z-10 max-h-[320px] overflow-y-auto">
           {entries.map((entry, i) => (
             <div key={i} className="px-6 py-3 border-b border-border/10 last:border-0 animate-float-up">
               <div className="flex items-start gap-3">
@@ -464,7 +467,6 @@ function AuditLog({ entries }: { entries: AuditEntry[] }) {
               </div>
             </div>
           ))}
-          <div ref={bottomRef} />
         </div>
       )}
     </div>
@@ -525,6 +527,8 @@ export function ControlCenter() {
         setSignals((prev) => prev.map((s) => (s.id === sigId ? { ...s, triggered: true } : s)))
         setFleet((prev) => prev.map((a) => a.id === targetAgent ? { ...a, activeSignals: idx + 1, escalationStatus: escalationStatuses[idx], lastChange: Date.now() } : a))
         setAuditLog((prev) => [...prev, { timestamp: Date.now(), agentId: targetAgent, signal: SIGNAL_NAMES[idx], tier: idx + 1, action: ESCALATION_ACTIONS[idx] }])
+        const tierEl = document.querySelector(`[data-tier="${idx + 1}"]`)
+        tierEl?.scrollIntoView({ behavior: "smooth", block: "center" })
         if (idx === signalIds.length - 1) setSimulating(false)
       }, (idx + 1) * 1200)
       simTimeoutsRef.current.push(timeout)
