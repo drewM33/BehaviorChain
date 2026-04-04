@@ -504,3 +504,44 @@ export function formatHash(h: string): string {
   if (h.length <= 14) return h;
   return `${h.slice(0, 8)}…${h.slice(-4)}`;
 }
+
+export interface TrustSignal {
+  agentId: number;
+  chainLength: number;
+  lastCommitAge: number;
+  driftFlags: number;
+  recentCriticalDrift: boolean;
+  chainIntact: boolean;
+  integrityScore: number;
+  humanDelegated: boolean;
+}
+
+export function getTrustSignal(agentId: number): TrustSignal | null {
+  const agent = AGENTS_MAP.get(agentId);
+  if (!agent) return null;
+
+  const lastCommitAge = Math.floor((Date.now() - agent.lastChangeDate) / 1000);
+  const recentCriticalDrift = agent.driftAlerts.some(
+    (a) =>
+      (a.severity === 'critical' || a.severity === 'high') &&
+      Date.now() - a.timestamp < 86_400_000,
+  );
+
+  let integrityScore = 100;
+  if (!agent.chainIntact) integrityScore -= 40;
+  if (recentCriticalDrift) integrityScore -= 20;
+  integrityScore -= Math.min(30, agent.driftFlagCount * 3);
+  if (agent.delegation) integrityScore = Math.min(100, integrityScore + 5);
+  integrityScore = Math.max(0, integrityScore);
+
+  return {
+    agentId: agent.agentId,
+    chainLength: agent.chainLength,
+    lastCommitAge,
+    driftFlags: agent.driftFlagCount,
+    recentCriticalDrift,
+    chainIntact: agent.chainIntact,
+    integrityScore,
+    humanDelegated: agent.delegation !== null,
+  };
+}

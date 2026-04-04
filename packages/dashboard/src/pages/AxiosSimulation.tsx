@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 
 const STEPS = [
   { title: 'Clean history', time: 'Before attack' },
@@ -76,20 +76,59 @@ const SIGNALS: Signal[] = [
   },
 ];
 
-const COMPARISON = [
-  { check: 'Wallet address', result: 'Same', pass: true },
-  { check: 'ERC-8004 identity', result: 'Registered', pass: true },
-  { check: 'AgentKit proof-of-human', result: 'Valid', pass: true },
-  { check: 'Reputation score', result: 'AAA (no feedback yet)', pass: true },
-  { check: 'npm audit', result: 'Clean (malware self-destructed)', pass: true },
-  { check: 'BehaviorChain', result: '5 critical alerts in 3 minutes', pass: false },
+interface LiveCheck {
+  check: string;
+  result: string;
+  pass: boolean;
+  live: boolean;
+}
+
+const STATIC_COMPARISON: LiveCheck[] = [
+  { check: 'Wallet address', result: 'Same', pass: true, live: false },
+  { check: 'ERC-8004 identity', result: 'Registered', pass: true, live: false },
+  { check: 'AgentKit proof-of-human', result: 'Loading…', pass: true, live: true },
+  { check: 'Reputation score', result: 'AAA (no feedback yet)', pass: true, live: false },
+  { check: 'npm audit', result: 'Clean (malware self-destructed)', pass: true, live: false },
+  { check: 'BehaviorChain', result: '5 critical alerts in 3 minutes', pass: false, live: false },
 ];
 
 const CHAIN_LABELS = ['Genesis', 'Config v2.1', 'Model upgrade', 'Route \u2192 prod'];
 
+const DEMO_AGENT_ID = 47;
+
 export function AxiosSimulation() {
   const [step, setStep] = useState(0);
   const [locked, setLocked] = useState(false);
+  const [comparison, setComparison] = useState<LiveCheck[]>(STATIC_COMPARISON);
+
+  useEffect(() => {
+    Promise.all([
+      fetch(`/api/agents/${DEMO_AGENT_ID}/trust-signal`).then((r) => r.ok ? r.json() : null),
+      fetch(`/api/agents/${DEMO_AGENT_ID}/delegation`).then((r) => r.ok ? r.json() : null),
+    ]).then(([trustSignal, delegation]) => {
+      setComparison((prev) =>
+        prev.map((row) => {
+          if (row.check === 'AgentKit proof-of-human') {
+            const delegated = delegation?.delegated ?? false;
+            return {
+              ...row,
+              result: delegated ? 'Valid — human-backed (live)' : 'Not delegated (live)',
+              pass: true,
+              live: true,
+            };
+          }
+          if (row.check === 'BehaviorChain' && trustSignal) {
+            return {
+              ...row,
+              result: `Integrity: ${trustSignal.integrityScore}/100, ${trustSignal.driftFlags} flags, chain ${trustSignal.chainIntact ? 'intact' : 'BROKEN'} (live)`,
+              pass: trustSignal.integrityScore >= 50,
+            };
+          }
+          return row;
+        }),
+      );
+    }).catch(() => {});
+  }, []);
 
   const advance = useCallback(() => {
     if (locked || step >= 6) return;
@@ -243,7 +282,7 @@ export function AxiosSimulation() {
                     </tr>
                   </thead>
                   <tbody>
-                    {COMPARISON.map((row, i) => (
+                    {comparison.map((row, i) => (
                       <tr
                         key={i}
                         className={`border-b border-surface-border/50 last:border-0 ${
@@ -448,7 +487,12 @@ export function AxiosSimulation() {
           </span>
           <span className="text-neutral-700">|</span>
           <span className="text-neutral-500">
-            AgentKit: <span className="text-neutral-300">human-backed</span>
+            AgentKit:{' '}
+            <span className="text-neutral-300">
+              {comparison.find((c) => c.check === 'AgentKit proof-of-human')?.result.includes('human-backed') || comparison.find((c) => c.check === 'AgentKit proof-of-human')?.result.includes('Valid')
+                ? 'human-backed'
+                : 'not delegated'}
+            </span>
           </span>
           <span className="text-neutral-700">|</span>
           <span className="text-neutral-500">

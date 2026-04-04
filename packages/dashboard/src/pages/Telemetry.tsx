@@ -68,6 +68,8 @@ export function Telemetry() {
   const { agentId } = useParams<{ agentId: string }>();
   const [data, setData] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [flagging, setFlagging] = useState(false);
+  const [flagResult, setFlagResult] = useState<string | null>(null);
 
   useEffect(() => {
     setLoading(true);
@@ -127,12 +129,44 @@ export function Telemetry() {
             Live on-chain
           </span>
         )}
-        <Link
-          to={`/badge/${data.agentId}`}
-          className="ml-auto text-xs text-chain hover:underline font-mono"
-        >
-          View Badge →
-        </Link>
+        <div className="ml-auto flex items-center gap-3">
+          {flagResult && (
+            <span className="text-xs font-mono text-status-green">{flagResult}</span>
+          )}
+          <button
+            onClick={async () => {
+              setFlagging(true);
+              setFlagResult(null);
+              try {
+                const res = await fetch(`/api/agents/${data.agentId}/flag`, {
+                  method: 'POST',
+                  headers: { 'content-type': 'application/json' },
+                  body: JSON.stringify({ reason: 'Manual review flagged via dashboard' }),
+                });
+                if (res.ok) {
+                  setFlagResult('Drift flagged');
+                } else {
+                  setFlagResult('Flag failed');
+                }
+              } catch {
+                setFlagResult('Network error');
+              }
+              setFlagging(false);
+            }}
+            disabled={flagging}
+            className="px-3 py-1.5 text-xs font-mono font-medium rounded border transition-colors
+              bg-status-red/10 text-status-red border-status-red/30
+              hover:bg-status-red/20 disabled:opacity-50"
+          >
+            {flagging ? 'Flagging…' : 'Flag Drift'}
+          </button>
+          <Link
+            to={`/badge/${data.agentId}`}
+            className="text-xs text-chain hover:underline font-mono"
+          >
+            View Badge →
+          </Link>
+        </div>
       </div>
 
       {/* Metric cards */}

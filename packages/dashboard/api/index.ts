@@ -9,6 +9,7 @@ import {
   getStats,
   verifyChain,
   generateLiveAlert,
+  getTrustSignal,
 } from '../src/server/mock-data.js';
 import {
   getOnChainChain,
@@ -24,6 +25,36 @@ function isLiveAgent(agentId: number): boolean {
 
 const app = new Hono().basePath('/api');
 app.use('*', cors());
+
+const AGENTKIT_GATED_PATHS = [
+  '/agents/:agentId/chain',
+  '/agents/:agentId/chain/head',
+  '/agents/:agentId/chain/verify',
+  '/agents/:agentId/profile',
+  '/agents/:agentId/trust-signal',
+];
+
+function agentkitMiddleware() {
+  return async (c: any, next: any) => {
+    const agentkitHeader = c.req.header('x-agentkit') || c.req.header('x-agentkit-token');
+
+    if (agentkitHeader) {
+      c.set('agentkit_verified', true);
+      c.set('agentkit_token', agentkitHeader);
+    } else {
+      c.set('agentkit_verified', false);
+    }
+
+    c.header('X-AgentKit-Status', agentkitHeader ? 'verified' : 'unverified');
+    c.header('X-AgentKit-Mode', 'free-trial');
+
+    await next();
+  };
+}
+
+for (const path of AGENTKIT_GATED_PATHS) {
+  app.use(path, agentkitMiddleware());
+}
 
 const DEFAULT_GATE_ACTION = 'register-behaviorchain-agent';
 
@@ -158,6 +189,42 @@ app.get('/agents/:agentId/profile', async (c) => {
     trust: { score: agent.score, tier: agent.tier, riskLevel: agent.riskLevel, route: agent.route },
     drift: { flagCount: agent.driftFlagCount, highestSeverity: agent.highestSeverity, alerts: agent.driftAlerts.sort((a, b) => b.timestamp - a.timestamp) },
     delegation: agent.delegation, cleanLaps: agent.cleanLaps,
+  });
+});
+
+app.get('/agents/:agentId/trust-signal', (c) => {
+  const agentId = Number(c.req.param('agentId'));
+  const signal = getTrustSignal(agentId);
+  if (!signal) return c.json({ error: 'Agent not found' }, 404);
+  return c.json(signal);
+});
+
+app.post('/agents/:agentId/flag', async (c) => {
+  const agentId = Number(c.req.param('agentId'));
+  const agent = getAgent(agentId);
+  if (!agent) return c.json({ error: 'Agent not found' }, 404);
+
+  let reason = 'Suspicious behavior';
+  let snapshotIndex = agent.chainLength - 1;
+  try {
+    const body = await c.req.json<{ reason?: string; snapshotIndex?: number }>();
+    if (typeof body?.reason === 'string' && body.reason.trim()) reason = body.reason.trim();
+    if (typeof body?.snapshotIndex === 'number') snapshotIndex = body.snapshotIndex;
+  } catch {}
+
+  const agentkitHeader = c.req.header('x-agentkit');
+  const humanVerified = !!agentkitHeader;
+
+  return c.json({
+    ok: true,
+    agentId,
+    snapshotIndex,
+    reason,
+    flaggedAt: Date.now(),
+    humanVerified,
+    note: humanVerified
+      ? 'Flag submitted with AgentKit human verification.'
+      : 'Flag submitted without human verification. In production, only human-backed agents can flag drift.',
   });
 });
 
