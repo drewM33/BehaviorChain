@@ -30,13 +30,13 @@ export default function DriftFeedPage() {
   const nextSimIdx = useRef(0)
 
   useEffect(() => {
-    const tickInterval = setInterval(() => setTick(t => t + 1), 5000)
+    const tickInterval = setInterval(() => setTick(t => t + 1), 1000)
     return () => clearInterval(tickInterval)
   }, [])
 
   useEffect(() => {
-    const minDelay = 2000
-    const maxDelay = 5000
+    const minDelay = 800
+    const maxDelay = 1500
 
     const scheduleNext = () => {
       const delay = minDelay + Math.random() * (maxDelay - minDelay)
