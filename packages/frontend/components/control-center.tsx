@@ -7,6 +7,8 @@ type EscalationStatus = "quiet" | "notified" | "escalated" | "war room" | "conta
 type SignalSensitivity = "low" | "medium" | "high"
 type Network = "Base Sepolia" | "Base mainnet"
 
+type TrustGrade = "AAA" | "AA" | "A" | "BA" | "B" | "UNRATED"
+
 interface FleetAgent {
   id: number
   name: string
@@ -16,6 +18,17 @@ interface FleetAgent {
   lastChange: number
   activeSignals: number
   escalationStatus: EscalationStatus
+  address: string
+  trustGrade: TrustGrade
+  costPerReq: number
+  costMultiplier: number
+  infraCost: number
+  valueCost: number
+  cer: number
+  cerDelta: number
+  requests: number
+  gradeHistory: TrustGrade[]
+  sparkline: number[]
 }
 
 interface SignalConfig {
@@ -65,11 +78,22 @@ const TIER_DEFAULTS: EscalationTier[] = [
   { tier: 5, label: "Kill switch", sublabel: "Full lockdown — all credentials invalidated", signalCount: 5, actions: ["Revoke all credentials + suspend", "Network isolation", "Full account freeze"], selectedAction: 0, inputLabel: "", inputValue: "", active: false },
 ]
 
+function seedSparkline(base: number, variance: number, len: number): number[] {
+  const pts: number[] = []
+  let v = base
+  for (let i = 0; i < len; i++) {
+    v += (Math.random() - 0.5) * variance
+    v = Math.max(0, v)
+    pts.push(v)
+  }
+  return pts
+}
+
 const MOCK_FLEET: FleetAgent[] = [
-  { id: 3458, name: "prod-inference-v3", chain: "Base Sepolia", worldId: { verified: true, nullifierHash: "0x2a8d…f91c" }, chainLength: 4, lastChange: Date.now() - 18 * 86400000, activeSignals: 0, escalationStatus: "quiet" },
-  { id: 7721, name: "staging-qa-bot", chain: "Base Sepolia", worldId: { verified: true, nullifierHash: "0x91bf…3c02" }, chainLength: 12, lastChange: Date.now() - 3 * 86400000, activeSignals: 0, escalationStatus: "quiet" },
-  { id: 8192, name: "ci-deploy-agent", chain: "Base mainnet", worldId: { verified: false }, chainLength: 47, lastChange: Date.now() - 120000, activeSignals: 1, escalationStatus: "notified" },
-  { id: 9004, name: "data-pipeline-alpha", chain: "Base Sepolia", worldId: { verified: true, nullifierHash: "0xc4e1…8a37" }, chainLength: 203, lastChange: Date.now() - 30000, activeSignals: 5, escalationStatus: "contained" },
+  { id: 3458, name: "prod-inference-v3", chain: "Base Sepolia", worldId: { verified: true, nullifierHash: "0x2a8d…f91c" }, chainLength: 4, lastChange: Date.now() - 18 * 86400000, activeSignals: 0, escalationStatus: "quiet", address: "0x1d5b…40b2", trustGrade: "BA", costPerReq: 0.013, costMultiplier: 1.3, infraCost: 0.0123, valueCost: 0.0126, cer: 1.0, cerDelta: 1.0, requests: 35574, gradeHistory: ["UNRATED", "BA"], sparkline: seedSparkline(30, 8, 20) },
+  { id: 7721, name: "staging-qa-bot", chain: "Base Sepolia", worldId: { verified: true, nullifierHash: "0x91bf…3c02" }, chainLength: 12, lastChange: Date.now() - 3 * 86400000, activeSignals: 0, escalationStatus: "quiet", address: "0x1595…c703", trustGrade: "UNRATED", costPerReq: 0.010, costMultiplier: 1.0, infraCost: 0.0130, valueCost: 0.0140, cer: 1.1, cerDelta: 0.3, requests: 5413, gradeHistory: ["UNRATED"], sparkline: seedSparkline(15, 5, 20) },
+  { id: 8192, name: "ci-deploy-agent", chain: "Base mainnet", worldId: { verified: false }, chainLength: 47, lastChange: Date.now() - 120000, activeSignals: 1, escalationStatus: "notified", address: "0xe2c8…7289", trustGrade: "AAA", costPerReq: 0.005, costMultiplier: 0.5, infraCost: 0.0193, valueCost: 0.0473, cer: 2.4, cerDelta: 0.2, requests: 40515, gradeHistory: ["UNRATED", "AAA", "AAA", "AAA"], sparkline: seedSparkline(50, 6, 20) },
+  { id: 9004, name: "data-pipeline-alpha", chain: "Base Sepolia", worldId: { verified: true, nullifierHash: "0xc4e1…8a37" }, chainLength: 203, lastChange: Date.now() - 30000, activeSignals: 5, escalationStatus: "contained", address: "0x4f7a…e129", trustGrade: "A", costPerReq: 0.008, costMultiplier: 0.8, infraCost: 0.0156, valueCost: 0.0287, cer: 1.8, cerDelta: -0.5, requests: 18902, gradeHistory: ["UNRATED", "B", "BA", "A"], sparkline: seedSparkline(40, 12, 20) },
 ]
 
 const SIGNAL_NAMES = ["Dependency graph changed", "New outbound destination", "Credential access detected", "Subprocess spawned", "Self-modification detected"]
@@ -104,61 +128,122 @@ function signalBadge(count: number) {
   return { text: `${count}/5`, cls: "text-destructive bg-destructive/10 border-destructive/30" }
 }
 
-function FleetTable({ agents, selectedId, onSelect }: { agents: FleetAgent[]; selectedId: number | null; onSelect: (id: number) => void }) {
+function gradeColor(grade: TrustGrade): string {
+  if (grade === "AAA" || grade === "AA") return "text-primary"
+  if (grade === "A" || grade === "BA") return "text-yellow-500"
+  if (grade === "B") return "text-orange-400"
+  return "text-muted-foreground"
+}
+
+function gradeBg(grade: TrustGrade): string {
+  if (grade === "AAA" || grade === "AA") return "bg-primary/15 border-primary/30 text-primary"
+  if (grade === "A" || grade === "BA") return "bg-yellow-500/15 border-yellow-500/30 text-yellow-500"
+  if (grade === "B") return "bg-orange-400/15 border-orange-400/30 text-orange-400"
+  return "bg-muted border-border/40 text-muted-foreground"
+}
+
+function Sparkline({ data, color, width = 120, height = 32 }: { data: number[]; color: string; width?: number; height?: number }) {
+  if (data.length < 2) return null
+  const min = Math.min(...data)
+  const max = Math.max(...data)
+  const range = max - min || 1
+  const step = width / (data.length - 1)
+
+  const points = data.map((v, i) => `${i * step},${height - ((v - min) / range) * (height - 4) - 2}`).join(" ")
+
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-border/30 glass-panel noise-bg">
-      <div className="relative z-10 px-6 py-4 border-b border-border/20 flex items-center justify-between">
-        <h2 className="text-[10px] font-mono uppercase tracking-[0.2em] text-muted-foreground">Agent Fleet</h2>
-        <span className="text-[10px] font-mono text-muted-foreground/50">{agents.length} agents</span>
+    <svg width={width} height={height} className="overflow-visible">
+      <polyline fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" points={points} />
+    </svg>
+  )
+}
+
+function AgentCard({ agent, isSelected, onSelect }: { agent: FleetAgent; isSelected: boolean; onSelect: (id: number) => void }) {
+  const [liveRequests, setLiveRequests] = useState(agent.requests)
+  const [liveSparkline, setLiveSparkline] = useState(agent.sparkline)
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const delta = Math.floor(Math.random() * 12) + 1
+      setLiveRequests((prev) => prev + delta)
+      setLiveSparkline((prev) => {
+        const next = [...prev.slice(1), prev[prev.length - 1] + (Math.random() - 0.45) * 8]
+        return next
+      })
+    }, 1500 + Math.random() * 1000)
+    return () => clearInterval(interval)
+  }, [])
+
+  const sig = signalBadge(agent.activeSignals)
+  const sparkColor = agent.activeSignals >= 3 ? "oklch(0.577 0.245 27.325)" : agent.activeSignals >= 1 ? "#eab308" : "oklch(0.75 0.18 160)"
+  const borderAccent = agent.activeSignals >= 3 ? "border-b-destructive" : agent.activeSignals >= 1 ? "border-b-yellow-500" : "border-b-primary"
+
+  return (
+    <div
+      onClick={() => onSelect(agent.id)}
+      className={cn(
+        "relative overflow-hidden rounded-2xl border border-border/30 glass-panel noise-bg cursor-pointer transition-all duration-300 hover:border-primary/20 border-b-2",
+        borderAccent,
+        isSelected && "ring-1 ring-primary/30 border-primary/20"
+      )}
+    >
+      <div className="relative z-10 p-5">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-xs font-mono text-muted-foreground truncate"># {agent.address}</span>
+          </div>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <span className={cn("inline-flex px-2 py-0.5 rounded text-[10px] font-mono font-bold border", sig.cls)}>{sig.text}</span>
+            <span className={cn("inline-flex px-2 py-0.5 rounded text-[10px] font-mono font-bold border", gradeBg(agent.trustGrade))}>{agent.trustGrade}</span>
+          </div>
+        </div>
+
+        <div className="flex items-baseline justify-between mb-1">
+          <div className="flex items-baseline gap-2">
+            <span className={cn("text-2xl font-bold font-mono", gradeColor(agent.trustGrade))}>{agent.costMultiplier}x</span>
+            <span className="text-xs text-muted-foreground">${agent.costPerReq.toFixed(4)} / req</span>
+          </div>
+          <div className="text-right">
+            <span className={cn("text-lg font-bold font-mono", agent.cer >= 1.5 ? "text-primary" : agent.cer >= 1.0 ? "text-yellow-500" : "text-destructive")}>{agent.cer}x</span>
+            <span className="text-[10px] font-mono text-muted-foreground ml-1">CER</span>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between text-[10px] font-mono text-muted-foreground/60 mb-4">
+          <span>${agent.infraCost.toFixed(4)} infra/call | ${agent.valueCost.toFixed(4)} value/call</span>
+          <span className={cn(agent.cerDelta >= 0 ? "text-primary" : "text-destructive")}>{agent.cerDelta >= 0 ? "+" : ""}{agent.cerDelta.toFixed(1)}%</span>
+        </div>
+
+        <div className="flex items-end justify-between mb-4">
+          <div>
+            <span className="text-[10px] font-mono uppercase tracking-[0.15em] text-muted-foreground">Requests</span>
+            <p className="text-xl font-bold font-mono text-foreground">{liveRequests.toLocaleString()}</p>
+          </div>
+          <Sparkline data={liveSparkline} color={sparkColor} />
+        </div>
+
+        <div className="pt-3 border-t border-border/20">
+          <span className="text-[10px] font-mono uppercase tracking-[0.15em] text-muted-foreground">Grade History</span>
+          <div className="flex items-center gap-1.5 mt-1.5">
+            {agent.gradeHistory.map((g, i) => (
+              <span key={i} className="flex items-center gap-1">
+                {i > 0 && <span className="text-muted-foreground/30 text-[10px]">→</span>}
+                <span className={cn("text-[10px] font-mono font-bold px-1.5 py-0.5 rounded border", gradeBg(g))}>{g}</span>
+              </span>
+            ))}
+          </div>
+        </div>
       </div>
-      <div className="relative z-10 overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-border/20">
-              <th className="text-left py-3 px-5 text-[10px] font-mono uppercase tracking-[0.15em] text-muted-foreground">Agent</th>
-              <th className="text-left py-3 px-5 text-[10px] font-mono uppercase tracking-[0.15em] text-muted-foreground">Chain</th>
-              <th className="text-left py-3 px-5 text-[10px] font-mono uppercase tracking-[0.15em] text-muted-foreground">World ID</th>
-              <th className="text-left py-3 px-5 text-[10px] font-mono uppercase tracking-[0.15em] text-muted-foreground">Changes</th>
-              <th className="text-left py-3 px-5 text-[10px] font-mono uppercase tracking-[0.15em] text-muted-foreground">Last Change</th>
-              <th className="text-left py-3 px-5 text-[10px] font-mono uppercase tracking-[0.15em] text-muted-foreground">Signals</th>
-              <th className="text-left py-3 px-5 text-[10px] font-mono uppercase tracking-[0.15em] text-muted-foreground">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {agents.map((agent) => {
-              const sig = signalBadge(agent.activeSignals)
-              const isSelected = selectedId === agent.id
-              return (
-                <tr key={agent.id} onClick={() => onSelect(agent.id)}
-                  className={cn("border-b border-border/10 last:border-0 cursor-pointer transition-all duration-300",
-                    isSelected ? "bg-primary/[0.04]" : "hover:bg-primary/[0.02]"
-                  )}>
-                  <td className="py-3 px-5">
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono text-primary text-xs">#{agent.id}</span>
-                      <span className="text-foreground text-sm">{agent.name}</span>
-                    </div>
-                  </td>
-                  <td className="py-3 px-5 text-xs font-mono text-muted-foreground">{agent.chain}</td>
-                  <td className="py-3 px-5">
-                    {agent.worldId.verified
-                      ? <span className="text-xs text-primary font-mono">✓ verified</span>
-                      : <span className="text-xs text-muted-foreground/50">not linked</span>}
-                  </td>
-                  <td className="py-3 px-5 font-mono text-xs text-foreground">{agent.chainLength}</td>
-                  <td className="py-3 px-5 text-xs text-muted-foreground">{timeAgo(agent.lastChange)}</td>
-                  <td className="py-3 px-5">
-                    <span className={cn("inline-flex px-2 py-0.5 rounded text-xs font-mono font-medium border", sig.cls)}>{sig.text}</span>
-                  </td>
-                  <td className="py-3 px-5">
-                    <span className={cn("inline-flex px-2 py-0.5 rounded text-xs font-mono font-medium border", escalationBg(agent.escalationStatus), escalationColor(agent.escalationStatus))}>{agent.escalationStatus}</span>
-                  </td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
-      </div>
+    </div>
+  )
+}
+
+function FleetCards({ agents, selectedId, onSelect }: { agents: FleetAgent[]; selectedId: number | null; onSelect: (id: number) => void }) {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+      {agents.map((agent) => (
+        <AgentCard key={agent.id} agent={agent} isSelected={selectedId === agent.id} onSelect={onSelect} />
+      ))}
     </div>
   )
 }
@@ -443,7 +528,7 @@ export function ControlCenter() {
         </div>
       </div>
 
-      <FleetTable agents={fleet} selectedId={selectedAgentId} onSelect={handleSelectAgent} />
+      <FleetCards agents={fleet} selectedId={selectedAgentId} onSelect={handleSelectAgent} />
 
       <div>
         <div className="flex items-center gap-3 mb-4">
