@@ -7,7 +7,7 @@ import {
   type RpContext,
   type IDKitResult,
 } from "@worldcoin/idkit";
-import { Globe, Loader2 } from "lucide-react";
+import { Globe, Loader2, X } from "lucide-react";
 
 const SESSION_KEY = "bc_world_id_nullifier";
 const APP_ID =
@@ -112,11 +112,25 @@ export function WorldIdButton() {
     [nullifier]
   );
 
+  const disconnect = useCallback(() => {
+    sessionStorage.removeItem(SESSION_KEY);
+    setNullifier(null);
+    setRpContext(null);
+    setError(null);
+  }, []);
+
   if (nullifier) {
     return (
-      <div className="flex items-center gap-2 rounded-xl border border-primary/25 bg-primary/8 px-3 py-1.5">
+      <div className="group flex items-center gap-2 rounded-xl border border-primary/25 bg-primary/8 px-3 py-1.5">
         <Globe className="h-3.5 w-3.5 text-primary" />
         <span className="text-[11px] font-mono text-primary">{nullifier}</span>
+        <button
+          onClick={disconnect}
+          className="ml-0.5 rounded-md p-0.5 text-primary/40 transition-colors hover:text-primary hover:bg-primary/10"
+          title="Disconnect World ID"
+        >
+          <X className="h-3 w-3" />
+        </button>
       </div>
     );
   }
