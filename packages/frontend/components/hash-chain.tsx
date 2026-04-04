@@ -106,7 +106,7 @@ export function HashChain() {
                 </div>
                 <span className="text-[10px] font-mono text-muted-foreground">
                   {hoveredItem !== null
-                    ? formatTimeAgo(displayItems[hoveredItem]?.timestamp ?? 0)
+                    ? formatTimeAgo(Number(displayItems[hoveredItem]?.timestamp ?? 0))
                     : ""}
                 </span>
               </div>

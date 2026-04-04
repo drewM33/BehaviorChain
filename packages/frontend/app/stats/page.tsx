@@ -35,7 +35,7 @@ export default function StatsPage() {
           <MiniStat icon={Users} label="Total Agents" value={aggregateStats.totalAgents.toLocaleString()} />
           <MiniStat icon={GitBranch} label="Behavioral Changes" value={aggregateStats.totalBehavioralChanges.toLocaleString()} />
           <MiniStat icon={Target} label="Detection Rate" value={`${aggregateStats.driftDetectionRate}%`} highlight />
-          <MiniStat icon={Gauge} label="Avg Clean Laps" value={aggregateStats.avgCleanLapsBetweenChanges} />
+          <MiniStat icon={Gauge} label="Avg Clean Laps" value={String(aggregateStats.avgCleanLapsBetweenChanges)} />
           <MiniStat icon={Shield} label="Chain Integrity" value={`${aggregateStats.chainIntegrityRate}%`} highlight />
         </div>
 

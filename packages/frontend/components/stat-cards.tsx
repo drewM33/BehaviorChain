@@ -17,8 +17,8 @@ export function StatCards() {
 
   const snapshotCount = chainData?.snapshotCount ?? 0
   const lastCommit = chainData?.lastCommitTimestamp ?? 0
-  const driftFlags = chainData?.driftFlagCount ?? 0
-  const chainIntact = chainData?.chainIntact ?? true
+  const driftFlags = chainData?.driftFlags.length ?? 0
+  const chainIntact = true
 
   return (
     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">

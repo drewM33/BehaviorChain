@@ -140,7 +140,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       const pc = createPublicClient({
         chain: activeChain,
         transport: custom(ethereum),
-      });
+      }) as PublicClient;
       setBrowserPublicClient(pc);
 
       await fetchBalance(addr);
