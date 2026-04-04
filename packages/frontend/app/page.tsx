@@ -10,7 +10,6 @@ import {
   Shield,
   Radio,
   Flag,
-  Link2,
   Triangle,
   Square,
   Zap,
@@ -48,7 +47,6 @@ const features = [
 const pages = [
   { href: "/agent/8192", label: "Telemetry", icon: Radio, description: "Live agent profile with chain visualization and trust overlay" },
   { href: "/drift", label: "Behavior Detection", icon: Flag, description: "Real-time drift alert feed with severity classification" },
-  { href: "/explorer", label: "Circuit", icon: Link2, description: "On-chain hash chain explorer and integrity verification" },
   { href: "/leaderboard", label: "Standings", icon: Triangle, description: "Agents ranked by behavioral stability" },
   { href: "/stats", label: "Longevity", icon: Square, description: "Aggregate monitoring statistics and system health" },
 ]

@@ -8,9 +8,7 @@ import {
   Flag, 
   Trophy, 
   BarChart3, 
-  Link2, 
   BadgeCheck,
-  Play
 } from "lucide-react"
 
 const navItems = [
@@ -18,9 +16,7 @@ const navItems = [
   { href: "/drift", label: "Behavior Detection", icon: Flag },
   { href: "/leaderboard", label: "Standings", icon: Trophy },
   { href: "/stats", label: "Pit Wall", icon: BarChart3 },
-  { href: "/explorer", label: "Circuit", icon: Link2 },
   { href: "/badge/42069", label: "Badge", icon: BadgeCheck },
-  { href: "/demo/axios", label: "Demo", icon: Play },
 ]
 
 export function Navigation() {

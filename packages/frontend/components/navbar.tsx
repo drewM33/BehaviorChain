@@ -3,17 +3,15 @@
 import { useState, useRef, useEffect } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { ChevronDown, Radio, Play, Triangle, Square, Diamond, Flag, Link2, Wallet, LogOut, ArrowRight, Loader2 } from "lucide-react"
+import { ChevronDown, Radio, Triangle, Square, Diamond, Flag, Wallet, LogOut, ArrowRight, Loader2 } from "lucide-react"
 import { useWallet } from "@/lib/wallet-context"
 import { cn } from "@/lib/utils"
 
 const navItems = [
   { href: "/agent/8192", label: "Telemetry", icon: Radio },
   { href: "/drift", label: "Behavior Detection", icon: Flag },
-  { href: "/explorer", label: "Circuit", icon: Link2 },
   { href: "/leaderboard", label: "Standings", icon: Triangle },
   { href: "/stats", label: "Longevity", icon: Square },
-  { href: "/demo/axios", label: "Demo", icon: Play },
   { href: "/badge/42069", label: "Badge", icon: Diamond },
 ]
 
