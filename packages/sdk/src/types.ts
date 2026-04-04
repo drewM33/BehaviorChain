@@ -85,12 +85,12 @@ export const ZERO_BYTES32 =
 /** Base Sepolia (testnet) deployment. */
 export const BASE_SEPOLIA_CONTRACT = '0xDe27DF9DA6BaD0b172F3F1b48CEe818dFE4487CD';
 
-/** Base mainnet deployment — set after `npx hardhat run scripts/deploy.ts --network base`. */
-export const BASE_MAINNET_CONTRACT = '0x04814CE8a8eF68f824ed19e422E48d8408313947';
+/** Base mainnet deployment. */
+export const BASE_MAINNET_CONTRACT = '0x2Dd0946Be048e7B61E2995bdDE97860427e74562';
 
 /**
  * Default contract address used when `contractAddress` is omitted from config.
- * Points to mainnet when available, falls back to testnet.
+ * Defaults to testnet until a mainnet deployment is available.
  */
 export const DEFAULT_CONTRACT_ADDRESS =
   BASE_MAINNET_CONTRACT || BASE_SEPOLIA_CONTRACT;

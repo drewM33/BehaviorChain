@@ -1,14 +1,19 @@
 import { createPublicClient, http, type Hex } from "viem";
 import { base, baseSepolia } from "viem/chains";
-import { getNetworkConfig } from "@behaviorchain/sdk";
+import { getNetworkConfig, BASE_SEPOLIA_CONTRACT, BASE_MAINNET_CONTRACT } from "@behaviorchain/sdk";
 
 const CHAIN_ID = Number(process.env.NEXT_PUBLIC_CHAIN_ID ?? "84532");
 const networkConfig = getNetworkConfig(CHAIN_ID);
 export const activeChain = CHAIN_ID === 8453 ? base : baseSepolia;
 
+const SNAPSHOT_REGISTRY_FALLBACK: Record<number, string> = {
+  84532: BASE_SEPOLIA_CONTRACT,
+  8453: BASE_MAINNET_CONTRACT,
+};
+
 export const BEHAVIOR_SNAPSHOT_REGISTRY =
   (process.env.NEXT_PUBLIC_CONTRACT_ADDRESS as Hex) ??
-  "0xDe27DF9DA6BaD0b172F3F1b48CEe818dFE4487CD";
+  (SNAPSHOT_REGISTRY_FALLBACK[CHAIN_ID] || BASE_SEPOLIA_CONTRACT);
 
 export const registryAbi = [
   {
