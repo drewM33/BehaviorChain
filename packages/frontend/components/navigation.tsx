@@ -6,17 +6,13 @@ import { cn } from "@/lib/utils"
 import { 
   Activity, 
   Flag, 
-  Trophy, 
   BarChart3, 
-  BadgeCheck,
 } from "lucide-react"
 
 const navItems = [
   { href: "/agent/8192", label: "Telemetry", icon: Activity },
   { href: "/drift", label: "Behavior Detection", icon: Flag },
-  { href: "/leaderboard", label: "Standings", icon: Trophy },
   { href: "/stats", label: "Pit Wall", icon: BarChart3 },
-  { href: "/badge/42069", label: "Badge", icon: BadgeCheck },
 ]
 
 export function Navigation() {
@@ -38,8 +34,7 @@ export function Navigation() {
         <nav className="flex items-center gap-1 overflow-x-auto">
           {navItems.map((item) => {
             const isActive = pathname === item.href || 
-              (item.href.startsWith('/agent') && pathname.startsWith('/agent')) ||
-              (item.href.startsWith('/badge') && pathname.startsWith('/badge'))
+              (item.href.startsWith('/agent') && pathname.startsWith('/agent'))
             
             return (
               <Link

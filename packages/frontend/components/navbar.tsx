@@ -2,14 +2,12 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Radio, Triangle, Square, Diamond, Flag } from "lucide-react"
+import { Radio, Square, Flag } from "lucide-react"
 
 const navItems = [
   { href: "/agent/8192", label: "Telemetry", icon: Radio },
   { href: "/drift", label: "Behavior Detection", icon: Flag },
-  { href: "/leaderboard", label: "Standings", icon: Triangle },
   { href: "/stats", label: "Longevity", icon: Square },
-  { href: "/badge/42069", label: "Badge", icon: Diamond },
 ]
 
 export function Navbar() {
@@ -36,7 +34,6 @@ export function Navbar() {
             const isActive = pathname === item.href ||
               (item.href === "/" && pathname === "/") ||
               (item.href.startsWith("/agent") && pathname.startsWith("/agent")) ||
-              (item.href.startsWith("/badge") && pathname.startsWith("/badge")) ||
               (item.href !== "/" && pathname.startsWith(item.href))
             const Icon = item.icon
             return (
