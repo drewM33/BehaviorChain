@@ -1,37 +1,14 @@
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
 import { networkConfig } from '../config/network';
-
-function getEthereum(): any {
-  return (window as any).ethereum;
-}
-
-async function ensureCorrectChain(): Promise<void> {
-  const ethereum = getEthereum();
-  const chainId = await ethereum.request({ method: 'eth_chainId' });
-  if (chainId === networkConfig.chainIdHex) return;
-
-  try {
-    await ethereum.request({
-      method: 'wallet_switchEthereumChain',
-      params: [{ chainId: networkConfig.chainIdHex }],
-    });
-  } catch (switchError: any) {
-    if (switchError.code === 4902) {
-      await ethereum.request({
-        method: 'wallet_addEthereumChain',
-        params: [{
-          chainId: networkConfig.chainIdHex,
-          chainName: networkConfig.name,
-          nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
-          rpcUrls: [networkConfig.rpcUrl],
-          blockExplorerUrls: [networkConfig.explorerUrl],
-        }],
-      });
-    } else {
-      throw switchError;
-    }
-  }
-}
+import {
+  bindWalletProvider,
+  clearWalletProvider,
+  discoverInjectedProvider,
+  ensureCorrectChain,
+  getEthereum,
+  getLegacyEthereum,
+  withTimeout,
+} from '../lib/walletProvider';
 
 interface WalletState {
   address: string | null;
@@ -51,41 +28,90 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const [address, setAddress] = useState<string | null>(null);
   const [balance, setBalance] = useState<bigint | null>(null);
   const [connecting, setConnecting] = useState(false);
-  const hasProvider = typeof window !== 'undefined' && !!getEthereum();
+  const [hasProvider, setHasProvider] = useState(typeof window !== 'undefined' && !!getLegacyEthereum());
+  /** Bump when the bound EIP-1193 provider changes so event listeners re-attach. */
+  const [listenerEpoch, setListenerEpoch] = useState(0);
+
+  useEffect(() => {
+    if (hasProvider) return;
+    let attempts = 0;
+    const check = setInterval(() => {
+      if (getLegacyEthereum()) {
+        setHasProvider(true);
+        clearInterval(check);
+      }
+      if (++attempts >= 20) clearInterval(check);
+    }, 200);
+    return () => clearInterval(check);
+  }, [hasProvider]);
 
   const disconnect = useCallback(() => {
+    const ethereum = getEthereum();
+
     setAddress(null);
     setBalance(null);
     setConnecting(false);
+    clearWalletProvider();
+    setListenerEpoch((e) => e + 1);
 
-    const ethereum = getEthereum();
     if (!ethereum) return;
 
     try {
-      ethereum.request({
-        method: 'wallet_revokePermissions',
-        params: [{ eth_accounts: {} }],
-      }).catch(() => {});
+      ethereum
+        .request({
+          method: 'wallet_revokePermissions',
+          params: [{ eth_accounts: {} }],
+        })
+        .catch(() => {});
     } catch {
       // Not all wallets support revokePermissions — that's fine
     }
   }, []);
 
   const connect = useCallback(async () => {
-    const ethereum = getEthereum();
+    const ethereum = await discoverInjectedProvider();
     if (!ethereum) throw new Error('No wallet detected. Install MetaMask to continue.');
+
+    bindWalletProvider(ethereum);
+    setListenerEpoch((e) => e + 1);
 
     setConnecting(true);
     try {
-      await ensureCorrectChain();
-      const accounts: string[] = await ethereum.request({ method: 'eth_requestAccounts' });
+      const accounts = await withTimeout(
+        ethereum.request({ method: 'eth_requestAccounts' }) as Promise<string[]>,
+        120_000,
+        'Wallet connection timed out. Unlock MetaMask, close other wallet popups, and try again.',
+      );
+      if (!accounts?.length) throw new Error('No account connected.');
       const addr = accounts[0];
       setAddress(addr);
 
+      try {
+        await withTimeout(
+          ensureCorrectChain(ethereum),
+          120_000,
+          'Network switch timed out. Approve the network change in MetaMask or try again.',
+        );
+      } catch {
+        // Chain switch rejected or failed — still connected, just on the wrong chain
+      }
+
       const { ethers } = await import('ethers');
-      const provider = new ethers.BrowserProvider(ethereum);
-      const bal = await provider.getBalance(addr);
-      setBalance(bal);
+      const rpc = new ethers.JsonRpcProvider(networkConfig.rpcUrl, networkConfig.chainId);
+      try {
+        const bal = await withTimeout(
+          rpc.getBalance(addr),
+          15_000,
+          'Could not load balance from RPC (timeout). You can still continue.',
+        );
+        setBalance(bal);
+      } catch {
+        setBalance(null);
+      }
+    } catch (e) {
+      clearWalletProvider();
+      setListenerEpoch((n) => n + 1);
+      throw e;
     } finally {
       setConnecting(false);
     }
@@ -101,8 +127,8 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       } else if (address && accounts[0].toLowerCase() !== address.toLowerCase()) {
         setAddress(accounts[0]);
         import('ethers').then(({ ethers }) => {
-          const provider = new ethers.BrowserProvider(ethereum);
-          provider.getBalance(accounts[0]).then(setBalance).catch(() => {});
+          const rpc = new ethers.JsonRpcProvider(networkConfig.rpcUrl, networkConfig.chainId);
+          rpc.getBalance(accounts[0]).then(setBalance).catch(() => {});
         });
       }
     };
@@ -118,7 +144,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       ethereum.removeListener('accountsChanged', handleAccountsChanged);
       ethereum.removeListener('chainChanged', handleChainChanged);
     };
-  }, [address, disconnect]);
+  }, [address, disconnect, listenerEpoch]);
 
   return (
     <WalletContext.Provider value={{ address, balance, connecting, hasProvider, connect, disconnect }}>
