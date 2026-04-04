@@ -250,7 +250,7 @@ app.get('/events', (c) => {
     while (true) {
       const alert = generateLiveAlert();
       await stream.writeSSE({ data: JSON.stringify(alert), event: 'drift', id: String(id++) });
-      await stream.sleep(3000 + Math.random() * 4000);
+      await stream.sleep(1000 + Math.random() * 1000);
     }
   });
 });

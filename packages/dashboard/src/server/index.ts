@@ -242,7 +242,7 @@ app.get('/api/events', (c) => {
         event: 'drift',
         id: String(id++),
       });
-      await stream.sleep(3000 + Math.random() * 4000);
+      await stream.sleep(1000 + Math.random() * 1000);
     }
   });
 });
