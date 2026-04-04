@@ -39,7 +39,14 @@ const WalletContext = createContext<WalletContextValue | null>(null);
 
 function getEthereum(): any {
   if (typeof window === "undefined") return null;
-  return (window as any).ethereum ?? null;
+  const ethereum = (window as any).ethereum ?? null;
+  if (!ethereum) return null;
+
+  const providers = Array.isArray(ethereum.providers) ? ethereum.providers : [ethereum];
+  const metaMaskProvider = providers.find(
+    (provider: any) => provider?.isMetaMask && !provider?.isBraveWallet
+  );
+  return metaMaskProvider ?? providers[0] ?? ethereum;
 }
 
 async function ensureCorrectChain(): Promise<void> {
