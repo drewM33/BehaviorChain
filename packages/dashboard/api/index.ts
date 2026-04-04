@@ -272,6 +272,28 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   res.status(webRes.status);
   webRes.headers.forEach((value, key) => res.setHeader(key, value));
-  const body = await webRes.text();
-  res.send(body);
+
+  if (webRes.body) {
+    const reader = webRes.body.getReader();
+    const decoder = new TextDecoder();
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        res.write(decoder.decode(value, { stream: true }));
+        if (typeof (res as any).flush === 'function') (res as any).flush();
+      }
+    } catch {
+      /* client disconnected */
+    } finally {
+      res.end();
+    }
+  } else {
+    const body = await webRes.text();
+    res.send(body);
+  }
 }
+
+export const config = {
+  supportsResponseStreaming: true,
+};
