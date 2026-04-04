@@ -22,7 +22,7 @@ let _contract: ethers.Contract | null = null;
 
 function provider(): ethers.JsonRpcProvider {
   if (!_provider) {
-    const rpcUrl = process.env.BEHAVIORCHAIN_RPC_URL;
+    const rpcUrl = process.env.BEHAVIORCHAIN_RPC_URL?.trim();
     if (!rpcUrl) throw new Error('BEHAVIORCHAIN_RPC_URL not set');
     _provider = new ethers.JsonRpcProvider(rpcUrl);
   }
@@ -31,7 +31,7 @@ function provider(): ethers.JsonRpcProvider {
 
 function contract(): ethers.Contract {
   if (!_contract) {
-    const addr = process.env.BEHAVIORCHAIN_CONTRACT_ADDRESS;
+    const addr = process.env.BEHAVIORCHAIN_CONTRACT_ADDRESS?.trim();
     if (!addr) throw new Error('BEHAVIORCHAIN_CONTRACT_ADDRESS not set');
     _contract = new ethers.Contract(
       addr,

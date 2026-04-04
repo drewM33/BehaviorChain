@@ -31,8 +31,10 @@ export function registerWorldIdRoutes(app: Hono): void {
     }
 
     try {
+      const rpId = process.env.WORLDCOIN_RP_ID?.trim() ?? '';
       const { sig, nonce, createdAt, expiresAt } = signRequest(action, signingKey, 300);
       return c.json({
+        rp_id: rpId,
         sig,
         nonce,
         created_at: createdAt,

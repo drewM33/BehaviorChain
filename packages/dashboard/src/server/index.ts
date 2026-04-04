@@ -24,7 +24,7 @@ import {
 import { registerWorldIdRoutes } from './world-id.js';
 
 function isLiveAgent(agentId: number): boolean {
-  return agentId > 0;
+  return agentId > 0 && !getAgent(agentId);
 }
 
 export const app = new Hono();

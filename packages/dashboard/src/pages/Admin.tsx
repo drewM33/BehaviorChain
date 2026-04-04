@@ -1,7 +1,8 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useWallet } from '../context/WalletContext';
-import { IDKitRequestWidget, orbLegacy, type IDKitResult } from '@worldcoin/idkit';
+import { IDKitRequestWidget, deviceLegacy } from '@worldcoin/idkit';
+import type { IDKitRequestHookConfig, IDKitResult } from '@worldcoin/idkit';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -397,27 +398,58 @@ function CreateAgentPanel({
 }: {
   onCreated: (agent: FleetAgent) => void;
 }) {
-  const { address } = useWallet();
   const [expanded, setExpanded] = useState(false);
   const [name, setName] = useState('');
   const [network, setNetwork] = useState<Network>('Base Sepolia');
-  const [worldIdOpen, setWorldIdOpen] = useState(false);
   const [worldIdResult, setWorldIdResult] = useState<{ nullifier: string } | null>(null);
   const [worldIdError, setWorldIdError] = useState<string | null>(null);
+  const [worldIdOpen, setWorldIdOpen] = useState(false);
+  const [worldIdLoading, setWorldIdLoading] = useState(false);
+  const [rpContext, setRpContext] = useState<IDKitRequestHookConfig['rp_context'] | null>(null);
   const [registering, setRegistering] = useState(false);
   const [regStep, setRegStep] = useState(0);
 
-  const handleWorldIdSuccess = useCallback((result: IDKitResult) => {
-    const resp = result.responses?.[0];
-    const nullifier =
-      (resp && 'nullifier' in resp ? resp.nullifier : null)
-      ?? (resp && 'session_nullifier' in resp ? resp.session_nullifier[0] : null)
-      ?? (result as any).nullifier_hash
-      ?? null;
-    if (nullifier) {
-      const short = `${nullifier.slice(0, 6)}…${nullifier.slice(-4)}`;
-      setWorldIdResult({ nullifier: short });
-      setWorldIdError(null);
+  const handleConnectWorldId = useCallback(async () => {
+    setWorldIdLoading(true);
+    setWorldIdError(null);
+    try {
+      const res = await fetch('/api/world-id/rp-signature', { method: 'POST' });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error ?? `Server error (${res.status})`);
+      }
+      const ctx = await res.json();
+      setRpContext({
+        rp_id: ctx.rp_id ?? import.meta.env.VITE_WORLDCOIN_RP_ID ?? '',
+        nonce: ctx.nonce,
+        created_at: ctx.created_at,
+        expires_at: ctx.expires_at,
+        signature: ctx.sig,
+      });
+      setWorldIdOpen(true);
+    } catch (err: any) {
+      setWorldIdError(err.message ?? 'Failed to initialize World ID');
+    }
+    setWorldIdLoading(false);
+  }, []);
+
+  const handleWorldIdSuccess = useCallback(async (result: IDKitResult) => {
+    try {
+      const res = await fetch('/api/world-id/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idkitResponse: result }),
+      });
+      const data = await res.json();
+      if (res.ok && data.nullifier_hash) {
+        const short = `${data.nullifier_hash.slice(0, 6)}…${data.nullifier_hash.slice(-4)}`;
+        setWorldIdResult({ nullifier: short });
+        setWorldIdError(null);
+      } else {
+        setWorldIdError(data.error ?? 'Verification failed');
+      }
+    } catch {
+      setWorldIdError('Verification request failed');
     }
   }, []);
 
@@ -521,18 +553,23 @@ function CreateAgentPanel({
             ) : (
               <div className="flex items-center gap-3 flex-wrap">
                 <button
-                  onClick={() => setWorldIdOpen(true)}
-                  className="px-4 py-2.5 rounded-lg text-sm font-medium transition-all border bg-surface-hover border-surface-border text-neutral-300 hover:border-chain/40 hover:text-white flex items-center gap-2"
+                  onClick={handleConnectWorldId}
+                  disabled={worldIdLoading}
+                  className="px-4 py-2.5 rounded-lg text-sm font-medium transition-all border bg-surface-hover border-surface-border text-neutral-300 hover:border-chain/40 hover:text-white flex items-center gap-2 disabled:opacity-50"
                 >
-                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <circle cx="12" cy="12" r="10" />
-                    <circle cx="12" cy="12" r="4" />
-                    <line x1="12" y1="2" x2="12" y2="6" />
-                    <line x1="12" y1="18" x2="12" y2="22" />
-                    <line x1="2" y1="12" x2="6" y2="12" />
-                    <line x1="18" y1="12" x2="22" y2="12" />
-                  </svg>
-                  Connect World ID
+                  {worldIdLoading ? (
+                    <span className="w-4 h-4 border-2 border-chain border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <circle cx="12" cy="12" r="10" />
+                      <circle cx="12" cy="12" r="4" />
+                      <line x1="12" y1="2" x2="12" y2="6" />
+                      <line x1="12" y1="18" x2="12" y2="22" />
+                      <line x1="2" y1="12" x2="6" y2="12" />
+                      <line x1="18" y1="12" x2="22" y2="12" />
+                    </svg>
+                  )}
+                  {worldIdLoading ? 'Loading…' : 'Connect World ID'}
                 </button>
                 <span className="text-xs text-neutral-600">
                   Verify with World App to prove human backing
@@ -544,26 +581,18 @@ function CreateAgentPanel({
             )}
           </div>
 
-          <IDKitRequestWidget
-            open={worldIdOpen}
-            onOpenChange={setWorldIdOpen}
-            app_id={import.meta.env.VITE_WORLDCOIN_APP_ID ?? 'app_staging_7550e7fa7a8aaab72b3532e2cef26940'}
-            action="register-behaviorchain-agent"
-            rp_context={{
-              rp_id: import.meta.env.VITE_WORLDCOIN_RP_ID ?? 'rp_staging_example',
-              nonce: crypto.randomUUID(),
-              created_at: Math.floor(Date.now() / 1000),
-              expires_at: Math.floor(Date.now() / 1000) + 300,
-              signature: 'demo-signature',
-            }}
-            allow_legacy_proofs={true}
-            environment="staging"
-            preset={orbLegacy({ signal: address ?? '0x0' })}
-            onSuccess={handleWorldIdSuccess}
-            onError={(code) => {
-              setWorldIdError(`World ID verification failed (${code})`);
-            }}
-          />
+          {rpContext && (
+            <IDKitRequestWidget
+              app_id={import.meta.env.VITE_WORLDCOIN_APP_ID ?? 'app_staging_7550e7fa7a8aaab72b3532e2cef26940'}
+              action="register-behaviorchain-agent"
+              rp_context={rpContext}
+              preset={deviceLegacy()}
+              allow_legacy_proofs={true}
+              open={worldIdOpen}
+              onOpenChange={setWorldIdOpen}
+              onSuccess={handleWorldIdSuccess}
+            />
+          )}
 
           {registering ? (
             <div className="space-y-3 animate-fade-in">

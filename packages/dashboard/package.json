@@ -1,6 +1,6 @@
 {
   "name": "@behaviorchain/dashboard",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "description": "Dashboard + API for BehaviorChain — real-time behavioral integrity monitoring",
   "type": "module",

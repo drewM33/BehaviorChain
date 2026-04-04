@@ -20,7 +20,16 @@ import {
 import { signRequest } from '@worldcoin/idkit/signing';
 
 function isLiveAgent(agentId: number): boolean {
-  return agentId > 0;
+  return agentId > 0 && !getAgent(agentId);
+}
+
+function withTimeout<T>(promise: Promise<T>, ms = 15_000): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('On-chain query timed out')), ms),
+    ),
+  ]);
 }
 
 const app = new Hono().basePath('/api');
@@ -134,7 +143,7 @@ app.get('/leaderboard', (c) => {
 app.get('/agents/:agentId/chain', async (c) => {
   const agentId = Number(c.req.param('agentId'));
   if (isLiveAgent(agentId)) {
-    try { return c.json(await getOnChainChain(agentId)); }
+    try { return c.json(await withTimeout(getOnChainChain(agentId))); }
     catch (e: any) { return c.json({ error: `On-chain query failed: ${e.message}` }, 502); }
   }
   const agent = getAgent(agentId);
@@ -145,7 +154,7 @@ app.get('/agents/:agentId/chain', async (c) => {
 app.get('/agents/:agentId/chain/head', async (c) => {
   const agentId = Number(c.req.param('agentId'));
   if (isLiveAgent(agentId)) {
-    try { return c.json(await getOnChainHead(agentId)); }
+    try { return c.json(await withTimeout(getOnChainHead(agentId))); }
     catch (e: any) { return c.json({ error: `On-chain query failed: ${e.message}` }, 502); }
   }
   const agent = getAgent(agentId);
@@ -157,7 +166,7 @@ app.get('/agents/:agentId/chain/head', async (c) => {
 app.get('/agents/:agentId/chain/verify', async (c) => {
   const agentId = Number(c.req.param('agentId'));
   if (isLiveAgent(agentId)) {
-    try { return c.json(await verifyOnChainChain(agentId)); }
+    try { return c.json(await withTimeout(verifyOnChainChain(agentId))); }
     catch (e: any) { return c.json({ error: `On-chain query failed: ${e.message}` }, 502); }
   }
   const agent = getAgent(agentId);
@@ -176,7 +185,7 @@ app.get('/agents/:agentId/drift', (c) => {
 app.get('/agents/:agentId/profile', async (c) => {
   const agentId = Number(c.req.param('agentId'));
   if (isLiveAgent(agentId)) {
-    try { return c.json(await getOnChainProfile(agentId)); }
+    try { return c.json(await withTimeout(getOnChainProfile(agentId))); }
     catch (e: any) { return c.json({ error: `On-chain query failed: ${e.message}` }, 502); }
   }
   const agent = getAgent(agentId);
