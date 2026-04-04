@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { signRequest } from "@worldcoin/idkit-server";
+import { signRequest } from "@worldcoin/idkit-core/signing";
 
 const DEFAULT_ACTION = "register-behaviorchain-agent";
 
@@ -27,7 +27,6 @@ export async function POST(request: Request) {
     const { sig, nonce, createdAt, expiresAt } = signRequest({
       signingKeyHex: signingKey,
       action,
-      ttl: 300,
     });
     return NextResponse.json({
       rp_id: rpId,

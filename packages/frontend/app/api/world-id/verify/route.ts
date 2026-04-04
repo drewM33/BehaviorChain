@@ -1,20 +1,24 @@
 import { NextResponse } from "next/server";
+import type { IDKitResult } from "@worldcoin/idkit";
 
 export async function POST(request: Request) {
-  const rpId = process.env.WORLDCOIN_RP_ID?.trim();
+  let rp_id: string | undefined;
+  let idkitResponse: IDKitResult | undefined;
+
+  try {
+    const body = await request.json();
+    rp_id = body?.rp_id;
+    idkitResponse = body?.idkitResponse;
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
+
+  const rpId = (rp_id ?? process.env.WORLDCOIN_RP_ID)?.trim();
   if (!rpId) {
     return NextResponse.json(
       { error: "WORLDCOIN_RP_ID is not configured." },
       { status: 503 }
     );
-  }
-
-  let idkitResponse: unknown;
-  try {
-    const body = await request.json();
-    idkitResponse = body?.idkitResponse;
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
   if (!idkitResponse) {
