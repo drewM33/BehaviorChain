@@ -5,6 +5,7 @@ import { getAgentById, formatTimeAgo, getSeverityColor, getTierColor, getRiskCol
 import { cn } from "@/lib/utils"
 import { Link2, Clock, Flag, Shield, BadgeCheck, Route, Globe } from "lucide-react"
 import { ChainViz } from "./chain-viz"
+import { WorldIdWidget } from "@/components/world-id-widget"
 
 interface AgentPageProps {
   params: Promise<{ id: string }>
@@ -71,12 +72,10 @@ export default async function AgentPage({ params }: AgentPageProps) {
                 <InfoBox label="Tier" value={agent.tier} color={getTierColor(agent.tier)} />
                 <InfoBox label="Risk" value={agent.risk} color={getRiskColor(agent.risk)} />
                 <InfoBox label="Route" value={agent.route} />
-                {agent.worldIdVerified && (
-                  <div className="flex flex-col items-center rounded-xl border border-primary/20 bg-primary/5 p-4">
-                    <span className="text-[10px] font-mono text-primary flex items-center gap-1 mb-1"><Globe className="w-3 h-3" /> World ID</span>
-                    <code className="text-xs font-mono text-primary">{agent.worldIdNullifier}</code>
-                  </div>
-                )}
+                <WorldIdWidget
+                  alreadyVerified={agent.worldIdVerified}
+                  existingNullifier={agent.worldIdNullifier}
+                />
               </div>
             </div>
           </div>
