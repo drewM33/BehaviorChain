@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation"
 import { Navbar } from "@/components/navbar"
+import { ControlCenter } from "@/components/control-center"
 import { getAgentById, formatTimeAgo, getSeverityColor, getTierColor, getRiskColor, type ChainNode } from "@/lib/data"
 import { cn } from "@/lib/utils"
 import { Link2, Clock, Flag, Shield, BadgeCheck, Route, Globe } from "lucide-react"
@@ -25,7 +26,9 @@ export default async function AgentPage({ params }: AgentPageProps) {
       <Navbar />
 
       <main className="relative z-10 mx-auto max-w-[1400px] px-6 py-8">
-        <div className="mb-8">
+        <ControlCenter />
+
+        <div className="mt-12 mb-8 pt-8 border-t border-border/20">
           <div className="flex items-center gap-3 mb-2 flex-wrap">
             <h1 className="text-3xl font-bold tracking-tight text-foreground">
               Agent <span className="text-primary">#{agent.id}</span>
