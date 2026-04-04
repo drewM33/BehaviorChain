@@ -8,3 +8,4 @@ dist
 .cursor/
 *.tsbuildinfo
 .next/
+.vercel

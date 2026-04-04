@@ -1,8 +1,11 @@
-import 'dotenv/config';
+import { loadDashboardServerEnv } from './load-env.js';
+if (!process.env.VERCEL) {
+  loadDashboardServerEnv();
+}
+
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { streamSSE } from 'hono/streaming';
-import { serve } from '@hono/node-server';
 import {
   getAgent,
   getAllAlerts,
@@ -245,12 +248,13 @@ app.get('/api/events', (c) => {
 });
 
 // -------------------------------------------------------------------------
-// Start server
+// Start server (local dev / standalone only)
 // -------------------------------------------------------------------------
-const PORT = Number(process.env.BEHAVIORCHAIN_DASHBOARD_PORT ?? 3001);
-
-if (process.env.NODE_ENV !== 'test') {
-  serve({ fetch: app.fetch, port: PORT }, (info) => {
-    console.log(`[BehaviorChain API] listening on http://localhost:${info.port}`);
+if (process.env.NODE_ENV !== 'test' && !process.env.VERCEL) {
+  const PORT = Number(process.env.BEHAVIORCHAIN_DASHBOARD_PORT ?? 3001);
+  import('@hono/node-server').then(({ serve }) => {
+    serve({ fetch: app.fetch, port: PORT }, (info) => {
+      console.log(`[BehaviorChain API] listening on http://localhost:${info.port}`);
+    });
   });
 }

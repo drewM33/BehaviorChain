@@ -14,7 +14,7 @@ export function registerWorldIdRoutes(app: Hono): void {
       return c.json(
         {
           error:
-            'World ID RP signing key missing. Set WORLDCOIN_RP_SIGNING_KEY in the dashboard API .env (Developer Portal → signing key). Restart the API server after adding it.',
+            'World ID RP signing key missing. In packages/dashboard, copy .env.example to .env and set WORLDCOIN_RP_SIGNING_KEY to your 64-character hex key from developer.world.org (World ID 4.0 → RP signing key). Set WORLDCOIN_RP_ID there too (same as VITE_WORLDCOIN_RP_ID). Restart the API (port 3001) after saving.',
         },
         503,
       );

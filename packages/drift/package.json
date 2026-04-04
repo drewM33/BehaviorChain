@@ -2,6 +2,7 @@
   "name": "@behaviorchain/drift",
   "version": "1.0.0",
   "description": "Drift detection engine for BehaviorChain — real-time behavioral change monitoring for AI agents",
+  "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {

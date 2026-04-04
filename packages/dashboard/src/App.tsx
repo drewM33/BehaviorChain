@@ -6,13 +6,13 @@ import { Standings } from './pages/Standings';
 import { PitWall } from './pages/PitWall';
 import { BadgePreview } from './pages/BadgePreview';
 import { AxiosSimulation } from './pages/AxiosSimulation';
-import { WorldGatedControlCenter } from './pages/WorldGatedControlCenter';
+import { Admin } from './pages/Admin';
 
 export function App() {
   return (
     <Routes>
       <Route element={<Layout />}>
-        <Route path="/" element={<WorldGatedControlCenter />} />
+        <Route path="/" element={<Admin />} />
         <Route path="/admin" element={<Navigate to="/" replace />} />
         <Route path="/agent/:agentId" element={<Telemetry />} />
         <Route path="/drift" element={<RaceControl />} />
