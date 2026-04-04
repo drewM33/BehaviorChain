@@ -10,7 +10,15 @@ dotenvConfig({ path: path.resolve(__dirname, '..', 'packages', 'contracts', '.en
 const chainId = Number(process.env.BEHAVIORCHAIN_CHAIN_ID ?? '84532');
 const networkConfig = getNetworkConfig(chainId);
 
-const IDENTITY_REGISTRY = '0x8004A818BFB912233c491871b3d84c89A494BD9e';
+const IDENTITY_REGISTRY_BY_CHAIN: Record<number, string> = {
+  84532: '0x8004A818BFB912233c491871b3d84c89A494BD9e',
+  8453: '0x8004A169FB4a3325136EB29fA0ceB6D2e539a432',
+};
+const IDENTITY_REGISTRY = IDENTITY_REGISTRY_BY_CHAIN[chainId];
+if (!IDENTITY_REGISTRY) {
+  console.error(`Unsupported chain ID ${chainId}. Supported: ${Object.keys(IDENTITY_REGISTRY_BY_CHAIN).join(', ')}`);
+  process.exit(1);
+}
 
 const IDENTITY_REGISTRY_ABI = [
   'function register(string agentURI) returns (uint256)',

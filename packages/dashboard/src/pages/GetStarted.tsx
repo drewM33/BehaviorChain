@@ -1,10 +1,21 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useWallet } from '../context/WalletContext';
-import { networkConfig } from '../config/network';
+import { networkConfig, CHAIN_ID } from '../config/network';
 
-const IDENTITY_REGISTRY = '0x8004A818BFB912233c491871b3d84c89A494BD9e';
-const SNAPSHOT_REGISTRY = process.env.BEHAVIORCHAIN_CONTRACT_ADDRESS ?? '0xDe27DF9DA6BaD0b172F3F1b48CEe818dFE4487CD';
+const IDENTITY_REGISTRY_BY_CHAIN: Record<number, string> = {
+  84532: '0x8004A818BFB912233c491871b3d84c89A494BD9e',
+  8453: '0x8004A169FB4a3325136EB29fA0ceB6D2e539a432',
+};
+const IDENTITY_REGISTRY = IDENTITY_REGISTRY_BY_CHAIN[CHAIN_ID] ?? IDENTITY_REGISTRY_BY_CHAIN[84532];
+
+const SNAPSHOT_REGISTRY_BY_CHAIN: Record<number, string> = {
+  84532: '0xDe27DF9DA6BaD0b172F3F1b48CEe818dFE4487CD',
+  8453: process.env.BEHAVIORCHAIN_CONTRACT_ADDRESS ?? '',
+};
+const SNAPSHOT_REGISTRY = process.env.BEHAVIORCHAIN_CONTRACT_ADDRESS
+  ?? SNAPSHOT_REGISTRY_BY_CHAIN[CHAIN_ID]
+  ?? '0xDe27DF9DA6BaD0b172F3F1b48CEe818dFE4487CD';
 const BASESCAN_TX = `${networkConfig.explorerUrl}/tx/`;
 
 const BALANCE_OF_ABI = ['function balanceOf(address owner) view returns (uint256)'];

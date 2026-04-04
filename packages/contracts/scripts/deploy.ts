@@ -1,8 +1,18 @@
 import { ethers, run, network } from "hardhat";
 
-const ERC8004_IDENTITY_REGISTRY = "0x8004A818BFB912233c491871b3d84c89A494BD9e";
+const IDENTITY_REGISTRY_BY_NETWORK: Record<string, string> = {
+  baseSepolia: "0x8004A818BFB912233c491871b3d84c89A494BD9e",
+  base: "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+};
 
 async function main() {
+  const ERC8004_IDENTITY_REGISTRY = IDENTITY_REGISTRY_BY_NETWORK[network.name];
+  if (!ERC8004_IDENTITY_REGISTRY) {
+    throw new Error(
+      `Unsupported network "${network.name}". ` +
+      `Supported: ${Object.keys(IDENTITY_REGISTRY_BY_NETWORK).join(", ")}`,
+    );
+  }
   const [deployer] = await ethers.getSigners();
   const networkName = network.name;
 

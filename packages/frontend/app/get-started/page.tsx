@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect } from "react"
 import { Navbar } from "@/components/navbar"
 import { useWallet } from "@/lib/wallet-context"
-import { BEHAVIOR_SNAPSHOT_REGISTRY, networkConfig } from "@/lib/contract"
+import { BEHAVIOR_SNAPSHOT_REGISTRY, networkConfig, CHAIN_ID, activeChain } from "@/lib/contract"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
 import {
@@ -25,7 +25,11 @@ import {
   type Hex,
 } from "viem"
 
-const IDENTITY_REGISTRY: Address = "0x8004A818BFB912233c491871b3d84c89A494BD9e"
+const IDENTITY_REGISTRY_BY_CHAIN: Record<number, Address> = {
+  84532: "0x8004A818BFB912233c491871b3d84c89A494BD9e",
+  8453: "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+}
+const IDENTITY_REGISTRY: Address = IDENTITY_REGISTRY_BY_CHAIN[CHAIN_ID] ?? IDENTITY_REGISTRY_BY_CHAIN[84532]
 const SNAPSHOT_REGISTRY: Address = BEHAVIOR_SNAPSHOT_REGISTRY as Address
 const BASESCAN_TX = `${networkConfig.explorerUrl}/tx/`
 const ZERO_HASH: Hex = "0x0000000000000000000000000000000000000000000000000000000000000000"
@@ -216,6 +220,8 @@ export default function GetStartedPage() {
       const tokenURI = `data:application/json;base64,${btoa(JSON.stringify(agentCard))}`
 
       const hash = await wallet.walletClient.writeContract({
+        account: wallet.address!,
+        chain: activeChain,
         address: IDENTITY_REGISTRY,
         abi: identityRegistryAbi,
         functionName: "register",
@@ -257,6 +263,8 @@ export default function GetStartedPage() {
       )
 
       const hash = await wallet.walletClient.writeContract({
+        account: wallet.address!,
+        chain: activeChain,
         address: SNAPSHOT_REGISTRY,
         abi: snapshotRegistryAbi,
         functionName: "commitSnapshot",
