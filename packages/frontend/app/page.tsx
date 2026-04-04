@@ -46,7 +46,7 @@ const features = [
 ]
 
 const pages = [
-  { href: "/agent/3458", label: "Telemetry", icon: Radio, description: "Live agent profile with chain visualization and trust overlay" },
+  { href: "/agent/8192", label: "Telemetry", icon: Radio, description: "Live agent profile with chain visualization and trust overlay" },
   { href: "/drift", label: "Behavior Detection", icon: Flag, description: "Real-time drift alert feed with severity classification" },
   { href: "/explorer", label: "Circuit", icon: Link2, description: "On-chain hash chain explorer and integrity verification" },
   { href: "/leaderboard", label: "Standings", icon: Triangle, description: "Agents ranked by behavioral stability" },
@@ -103,7 +103,7 @@ export default function HomePage() {
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
               </Link>
               <Link
-                href="/agent/3458"
+                href="/agent/8192"
                 className="flex items-center gap-2 rounded-xl border border-border/40 glass-panel px-7 py-3.5 font-semibold text-foreground transition-all duration-300 hover:border-primary/30 hover:glow-sm"
               >
                 <Radio className="h-4 w-4 text-primary" />

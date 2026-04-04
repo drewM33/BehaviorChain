@@ -22,7 +22,7 @@ interface AgentContextValue {
 const AgentContext = createContext<AgentContextValue | null>(null);
 
 export function AgentProvider({ children }: { children: ReactNode }) {
-  const [agentId, setAgentId] = useState("3458");
+  const [agentId, setAgentId] = useState("8192");
   const [chainData, setChainData] = useState<AgentChainData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

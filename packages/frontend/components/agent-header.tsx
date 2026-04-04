@@ -4,7 +4,7 @@ import { ExternalLink, Loader2 } from "lucide-react"
 import { useAgent } from "@/lib/agent-context"
 import { networkConfig, BEHAVIOR_SNAPSHOT_REGISTRY } from "@/lib/contract"
 
-const agents = ["3458", "42", "43", "44", "45", "46", "47"]
+const agents = ["8192", "3301", "25459", "42069", "1337", "7777", "9999"]
 
 export function AgentHeader() {
   const { agentId, setAgentId, loading } = useAgent()
