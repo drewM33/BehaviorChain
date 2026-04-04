@@ -3,7 +3,7 @@ import { NavLink, Outlet } from 'react-router-dom';
 import { useWallet } from '../context/WalletContext';
 
 const NAV_ITEMS = [
-  { to: '/signup', label: 'Get Started', icon: '→' },
+  { to: '/', label: 'Control Center', icon: '⌘' },
   { to: '/agent/3458', label: 'Telemetry', icon: '◈' },
   { to: '/drift', label: 'Behavior Hashes', icon: '⚑' },
   { to: '/leaderboard', label: 'Standings', icon: '▲' },
@@ -135,6 +135,7 @@ export function Layout() {
                 <NavLink
                   key={item.to}
                   to={item.to}
+                  end={item.to === '/'}
                   className={({ isActive }) =>
                     `px-3 py-1.5 rounded text-sm font-medium transition-colors ${
                       isActive

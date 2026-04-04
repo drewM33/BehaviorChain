@@ -6,14 +6,14 @@ import { Standings } from './pages/Standings';
 import { PitWall } from './pages/PitWall';
 import { BadgePreview } from './pages/BadgePreview';
 import { AxiosSimulation } from './pages/AxiosSimulation';
-import { GetStarted } from './pages/GetStarted';
+import { WorldGatedControlCenter } from './pages/WorldGatedControlCenter';
 
 export function App() {
   return (
     <Routes>
       <Route element={<Layout />}>
-        <Route path="/" element={<Navigate to="/agent/3458" replace />} />
-        <Route path="/signup" element={<GetStarted />} />
+        <Route path="/" element={<WorldGatedControlCenter />} />
+        <Route path="/admin" element={<Navigate to="/" replace />} />
         <Route path="/agent/:agentId" element={<Telemetry />} />
         <Route path="/drift" element={<RaceControl />} />
         <Route path="/leaderboard" element={<Standings />} />
