@@ -519,10 +519,12 @@ export function ControlCenter() {
 
     signalIds.forEach((sigId, idx) => {
       const timeout = window.setTimeout(() => {
+        const scrollY = window.scrollY
         setSignals((prev) => prev.map((s) => (s.id === sigId ? { ...s, triggered: true } : s)))
         setFleet((prev) => prev.map((a) => a.id === targetAgent ? { ...a, activeSignals: idx + 1, escalationStatus: escalationStatuses[idx], lastChange: Date.now() } : a))
         setAuditLog((prev) => [...prev, { timestamp: Date.now(), agentId: targetAgent, signal: SIGNAL_NAMES[idx], tier: idx + 1, action: ESCALATION_ACTIONS[idx] }])
         if (idx === signalIds.length - 1) setSimulating(false)
+        requestAnimationFrame(() => window.scrollTo(0, scrollY))
       }, (idx + 1) * 1200)
       simTimeoutsRef.current.push(timeout)
     })
