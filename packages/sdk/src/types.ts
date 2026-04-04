@@ -86,7 +86,7 @@ export const ZERO_BYTES32 =
 export const BASE_SEPOLIA_CONTRACT = '0xDe27DF9DA6BaD0b172F3F1b48CEe818dFE4487CD';
 
 /** Base mainnet deployment — set after `npx hardhat run scripts/deploy.ts --network base`. */
-export const BASE_MAINNET_CONTRACT = '';
+export const BASE_MAINNET_CONTRACT = '0x04814CE8a8eF68f824ed19e422E48d8408313947';
 
 /**
  * Default contract address used when `contractAddress` is omitted from config.
