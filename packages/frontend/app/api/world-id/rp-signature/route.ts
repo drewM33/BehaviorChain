@@ -24,10 +24,10 @@ export async function POST(request: Request) {
 
   try {
     const rpId = process.env.WORLDCOIN_RP_ID?.trim() ?? "";
-    const { sig, nonce, createdAt, expiresAt } = signRequest({
-      signingKeyHex: signingKey,
+    const { sig, nonce, createdAt, expiresAt } = signRequest(
       action,
-    });
+      signingKey,
+    );
     return NextResponse.json({
       rp_id: rpId,
       sig,
