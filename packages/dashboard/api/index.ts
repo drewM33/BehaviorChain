@@ -82,7 +82,7 @@ app.post('/world-id/rp-signature', async (c) => {
   } catch {}
 
   try {
-    const { sig, nonce, createdAt, expiresAt } = signRequest(action, signingKey, 300);
+    const { sig, nonce, createdAt, expiresAt } = signRequest({ signingKeyHex: signingKey, action, ttl: 300 });
     return c.json({ sig, nonce, created_at: createdAt, expires_at: expiresAt });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'RP signing failed';

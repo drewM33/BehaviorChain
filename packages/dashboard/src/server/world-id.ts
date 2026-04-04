@@ -1,5 +1,5 @@
 import type { Hono } from 'hono';
-import { signRequest } from '@worldcoin/idkit/signing';
+import { signRequest } from '@worldcoin/idkit-server';
 
 const DEFAULT_GATE_ACTION = 'register-behaviorchain-agent';
 
@@ -32,7 +32,7 @@ export function registerWorldIdRoutes(app: Hono): void {
 
     try {
       const rpId = process.env.WORLDCOIN_RP_ID?.trim() ?? '';
-      const { sig, nonce, createdAt, expiresAt } = signRequest(action, signingKey, 300);
+      const { sig, nonce, createdAt, expiresAt } = signRequest({ signingKeyHex: signingKey, action, ttl: 300 });
       return c.json({
         rp_id: rpId,
         sig,

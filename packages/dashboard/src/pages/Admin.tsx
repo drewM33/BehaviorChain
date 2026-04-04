@@ -585,6 +585,7 @@ function CreateAgentPanel({
             <IDKitRequestWidget
               app_id={import.meta.env.VITE_WORLDCOIN_APP_ID ?? 'app_staging_7550e7fa7a8aaab72b3532e2cef26940'}
               action="register-behaviorchain-agent"
+              environment="production"
               rp_context={rpContext}
               preset={deviceLegacy()}
               allow_legacy_proofs={true}
