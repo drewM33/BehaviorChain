@@ -1,4 +1,4 @@
-import { getNetworkConfig, type NetworkConfig } from '@behaviorchain/sdk';
+import { getNetworkConfig, type NetworkConfig } from '@behaviorchain/sdk/dist/network.js';
 
 const CHAIN_ID = Number(
   (typeof import.meta !== 'undefined' && import.meta.env?.VITE_CHAIN_ID) ||
