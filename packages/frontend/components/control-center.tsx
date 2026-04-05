@@ -364,7 +364,7 @@ function EscalationPanel({ tiers, activeSignalCount, onActionChange, onInputChan
             const isActive = tier.tier <= activeSignalCount
             const color = tier.tier <= 2 ? "yellow" : "red"
             return (
-              <div key={tier.tier} data-tier={tier.tier} className={cn("rounded-xl border transition-all duration-500 overflow-hidden",
+              <div key={tier.tier} className={cn("rounded-xl border transition-all duration-500 overflow-hidden",
                 isActive
                   ? color === "yellow" ? "border-l-4 border-l-yellow-500 border-yellow-500/30 bg-yellow-500/5" : "border-l-4 border-l-destructive border-destructive/30 bg-destructive/5"
                   : "border-border/30 bg-background/40 hover:bg-primary/[0.02]"
@@ -428,22 +428,31 @@ function EscalationPanel({ tiers, activeSignalCount, onActionChange, onInputChan
   )
 }
 
-function AuditLog({ entries }: { entries: AuditEntry[] }) {
-
+function AuditLog({ entries, simulationPending }: { entries: AuditEntry[]; simulationPending: boolean }) {
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-border/30 glass-panel noise-bg">
+    <div className="relative overflow-hidden rounded-2xl border border-border/30 glass-panel noise-bg [overflow-anchor:none]">
       <div className="relative z-10 px-6 py-4 border-b border-border/20 flex items-center justify-between">
         <h2 className="text-[10px] font-mono uppercase tracking-[0.2em] text-muted-foreground">Audit Log</h2>
         <span className="text-[10px] font-mono text-muted-foreground/50">{entries.length} events</span>
       </div>
-      {entries.length === 0 ? (
-        <div className="relative z-10 px-6 py-8 text-center">
-          <p className="text-xs text-muted-foreground/50 font-mono">No escalation events recorded</p>
-          <p className="text-[10px] text-muted-foreground/30 mt-1">Run a simulation to generate audit trail</p>
-        </div>
-      ) : (
-        <div className="relative z-10 max-h-[320px] overflow-y-auto">
-          {entries.map((entry, i) => (
+      <div className="relative z-10 min-h-[260px] max-h-[320px] overflow-y-auto overflow-x-hidden [overflow-anchor:none]">
+        {entries.length === 0 ? (
+          <div className="flex min-h-[260px] flex-col items-center justify-center px-6 py-8 text-center">
+            {simulationPending ? (
+              <>
+                <span className="w-5 h-5 border-2 border-muted-foreground/30 border-t-primary rounded-full animate-spin mb-3" />
+                <p className="text-xs text-muted-foreground font-mono">Recording trail after simulation…</p>
+                <p className="text-[10px] text-muted-foreground/40 mt-1 max-w-xs">Watch escalation levels above until this run finishes</p>
+              </>
+            ) : (
+              <>
+                <p className="text-xs text-muted-foreground/50 font-mono">No escalation events recorded</p>
+                <p className="text-[10px] text-muted-foreground/30 mt-1">Run a simulation to generate audit trail</p>
+              </>
+            )}
+          </div>
+        ) : (
+          entries.map((entry, i) => (
             <div key={i} className="px-6 py-3 border-b border-border/10 last:border-0 animate-float-up">
               <div className="flex items-start gap-3">
                 <span className={cn("mt-0.5 w-6 h-6 rounded flex items-center justify-center text-[10px] font-bold font-mono shrink-0",
@@ -461,9 +470,9 @@ function AuditLog({ entries }: { entries: AuditEntry[] }) {
                 </div>
               </div>
             </div>
-          ))}
-        </div>
-      )}
+          ))
+        )}
+      </div>
     </div>
   )
 }
@@ -506,6 +515,7 @@ export function ControlCenter() {
     simTimeoutsRef.current = []
     setSimulating(false)
     setSignals(SIGNAL_DEFAULTS)
+    setAuditLog([])
     setFleet((prev) => prev.map((a) => a.id === (selectedAgentId ?? 8192) ? { ...a, activeSignals: 0, escalationStatus: "quiet" as EscalationStatus } : a))
   }, [selectedAgentId])
 
@@ -519,12 +529,21 @@ export function ControlCenter() {
 
     signalIds.forEach((sigId, idx) => {
       const timeout = window.setTimeout(() => {
-        const scrollY = window.scrollY
         setSignals((prev) => prev.map((s) => (s.id === sigId ? { ...s, triggered: true } : s)))
         setFleet((prev) => prev.map((a) => a.id === targetAgent ? { ...a, activeSignals: idx + 1, escalationStatus: escalationStatuses[idx], lastChange: Date.now() } : a))
-        setAuditLog((prev) => [...prev, { timestamp: Date.now(), agentId: targetAgent, signal: SIGNAL_NAMES[idx], tier: idx + 1, action: ESCALATION_ACTIONS[idx] }])
-        if (idx === signalIds.length - 1) setSimulating(false)
-        requestAnimationFrame(() => window.scrollTo(0, scrollY))
+        if (idx === signalIds.length - 1) {
+          const base = Date.now()
+          setAuditLog(
+            signalIds.map((_, i) => ({
+              timestamp: base - (signalIds.length - 1 - i) * 400,
+              agentId: targetAgent,
+              signal: SIGNAL_NAMES[i],
+              tier: i + 1,
+              action: ESCALATION_ACTIONS[i],
+            }))
+          )
+          setSimulating(false)
+        }
       }, (idx + 1) * 1200)
       simTimeoutsRef.current.push(timeout)
     })
@@ -540,7 +559,7 @@ export function ControlCenter() {
   }, [])
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 [overflow-anchor:none]">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <div className="flex items-center gap-3">
@@ -585,12 +604,13 @@ export function ControlCenter() {
         </div>
 
         <div className="flex items-center gap-3 mb-6">
-          <button onClick={handleSimulate} disabled={simulating}
-            className="group flex items-center gap-2 rounded-xl bg-destructive/10 border border-destructive/30 px-5 py-2.5 text-sm font-semibold text-destructive transition-all duration-300 hover:bg-destructive/20 disabled:opacity-50">
+          <button type="button" onClick={handleSimulate} aria-busy={simulating} aria-disabled={simulating}
+            className={cn("group flex items-center gap-2 rounded-xl bg-destructive/10 border border-destructive/30 px-5 py-2.5 text-sm font-semibold text-destructive transition-all duration-300 hover:bg-destructive/20",
+              simulating && "pointer-events-none opacity-60 cursor-wait")}>
             {simulating ? <span className="w-4 h-4 border-2 border-destructive border-t-transparent rounded-full animate-spin" /> : "▶"}
             {simulating ? "Simulating…" : "Simulate attack"}
           </button>
-          <button onClick={handleReset} className="text-xs text-muted-foreground hover:text-foreground transition-colors">Reset</button>
+          <button type="button" onClick={handleReset} className="text-xs text-muted-foreground hover:text-foreground transition-colors">Reset</button>
         </div>
 
         <EscalationPanel tiers={tiers} activeSignalCount={activeSignalCount} onActionChange={handleActionChange} onInputChange={handleInputChange} onSave={handleSave} simulating={simulating} />
@@ -605,7 +625,7 @@ export function ControlCenter() {
         </div>
       </div>
 
-      <AuditLog entries={auditLog} />
+      <AuditLog entries={auditLog} simulationPending={simulating} />
     </div>
   )
 }
