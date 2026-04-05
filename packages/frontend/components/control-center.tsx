@@ -578,34 +578,6 @@ export function ControlCenter() {
     return () => { simTimeoutsRef.current.forEach((t) => clearTimeout(t)) }
   }, [])
 
-  useEffect(() => {
-    if (!simulating) return
-
-    const scrollY = window.scrollY
-    const body = document.body
-    const html = document.documentElement
-    const prevBodyPosition = body.style.position
-    const prevBodyTop = body.style.top
-    const prevBodyWidth = body.style.width
-    const prevBodyOverflow = body.style.overflow
-    const prevHtmlOverflow = html.style.overflow
-
-    body.style.position = "fixed"
-    body.style.top = `-${scrollY}px`
-    body.style.width = "100%"
-    body.style.overflow = "hidden"
-    html.style.overflow = "hidden"
-
-    return () => {
-      body.style.position = prevBodyPosition
-      body.style.top = prevBodyTop
-      body.style.width = prevBodyWidth
-      body.style.overflow = prevBodyOverflow
-      html.style.overflow = prevHtmlOverflow
-      window.scrollTo({ top: scrollY, left: 0, behavior: "auto" })
-    }
-  }, [simulating])
-
   return (
     <div className="space-y-6 [overflow-anchor:none]">
       <div className="flex items-center justify-between flex-wrap gap-3">
