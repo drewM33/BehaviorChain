@@ -101,7 +101,7 @@ const SIGNAL_NAMES = ["Dependency graph changed", "New outbound destination", "C
 const ESCALATION_ACTIONS = ["SMS sent to +1 (415) 555-0172", "Phone call to admin", "Slack war room created", "npm tokens revoked, AWS credentials rotated", "Full lockdown — all credentials invalidated"]
 const SIMULATION_SIGNAL_IDS = ["dependency", "outbound", "credential", "subprocess", "selfmod"] as const
 const SIMULATION_ESCALATION_STATUSES: EscalationStatus[] = ["notified", "escalated", "war room", "contained", "contained"]
-const SIMULATION_STEP_MS = 2700
+const SIMULATION_STEP_MS = 3700
 
 function timeAgo(ts: number): string {
   const diff = Date.now() - ts
