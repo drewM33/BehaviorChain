@@ -99,6 +99,8 @@ const MOCK_FLEET: FleetAgent[] = [
 
 const SIGNAL_NAMES = ["Dependency graph changed", "New outbound destination", "Credential access detected", "Subprocess spawned", "Self-modification detected"]
 const ESCALATION_ACTIONS = ["SMS sent to +1 (415) 555-0172", "Phone call to admin", "Slack war room created", "npm tokens revoked, AWS credentials rotated", "Full lockdown — all credentials invalidated"]
+const SIMULATION_SIGNAL_IDS = ["dependency", "outbound", "credential", "subprocess", "selfmod"] as const
+const SIMULATION_ESCALATION_STATUSES: EscalationStatus[] = ["notified", "escalated", "war room", "contained", "contained"]
 
 function timeAgo(ts: number): string {
   const diff = Date.now() - ts
@@ -478,17 +480,25 @@ function AuditLog({ entries, simulationPending }: { entries: AuditEntry[]; simul
 }
 
 export function ControlCenter() {
-  const [fleet, setFleet] = useState<FleetAgent[]>(MOCK_FLEET)
+  const [fleet, setFleet] = useState<FleetAgent[]>(() =>
+    MOCK_FLEET.map((agent) =>
+      agent.id === 8192 ? { ...agent, activeSignals: 0, escalationStatus: "quiet" as EscalationStatus } : agent
+    )
+  )
   const [selectedAgentId, setSelectedAgentId] = useState<number | null>(MOCK_FLEET[0]?.id ?? null)
   const [signals, setSignals] = useState<SignalConfig[]>(SIGNAL_DEFAULTS)
   const [tiers, setTiers] = useState<EscalationTier[]>(TIER_DEFAULTS)
   const [auditLog, setAuditLog] = useState<AuditEntry[]>([])
   const [simulating, setSimulating] = useState(false)
+  const [previewLevel, setPreviewLevel] = useState(0)
   const [saved, setSaved] = useState(false)
   const simTimeoutsRef = useRef<number[]>([])
 
   const selectedAgent = fleet.find((a) => a.id === selectedAgentId) ?? null
-  const activeSignalCount = signals.filter((s) => s.triggered).length
+  const activeSignalCount = simulating ? previewLevel : signals.filter((s) => s.triggered).length
+  const selectedEscalationStatus = simulating && previewLevel > 0
+    ? SIMULATION_ESCALATION_STATUSES[Math.min(previewLevel - 1, SIMULATION_ESCALATION_STATUSES.length - 1)]
+    : selectedAgent?.escalationStatus
 
   const handleSelectAgent = useCallback((id: number) => {
     setSelectedAgentId((prev) => (prev === id ? null : id))
@@ -514,6 +524,7 @@ export function ControlCenter() {
     simTimeoutsRef.current.forEach((t) => clearTimeout(t))
     simTimeoutsRef.current = []
     setSimulating(false)
+    setPreviewLevel(0)
     setSignals(SIGNAL_DEFAULTS)
     setAuditLog([])
     setFleet((prev) => prev.map((a) => a.id === (selectedAgentId ?? 8192) ? { ...a, activeSignals: 0, escalationStatus: "quiet" as EscalationStatus } : a))
@@ -524,18 +535,27 @@ export function ControlCenter() {
     handleReset()
     setSimulating(true)
     const targetAgent = selectedAgentId ?? 8192
-    const signalIds = ["dependency", "outbound", "credential", "subprocess", "selfmod"]
-    const escalationStatuses: EscalationStatus[] = ["notified", "escalated", "war room", "contained", "contained"]
 
-    signalIds.forEach((sigId, idx) => {
+    SIMULATION_SIGNAL_IDS.forEach((_, idx) => {
       const timeout = window.setTimeout(() => {
-        setSignals((prev) => prev.map((s) => (s.id === sigId ? { ...s, triggered: true } : s)))
-        setFleet((prev) => prev.map((a) => a.id === targetAgent ? { ...a, activeSignals: idx + 1, escalationStatus: escalationStatuses[idx], lastChange: Date.now() } : a))
-        if (idx === signalIds.length - 1) {
+        setPreviewLevel(idx + 1)
+        if (idx === SIMULATION_SIGNAL_IDS.length - 1) {
           const base = Date.now()
+          setSignals((prev) =>
+            prev.map((signal) => ({
+              ...signal,
+              triggered: SIMULATION_SIGNAL_IDS.includes(signal.id as (typeof SIMULATION_SIGNAL_IDS)[number]),
+            }))
+          )
+          setFleet((prev) => prev.map((a) => a.id === targetAgent ? {
+            ...a,
+            activeSignals: SIMULATION_SIGNAL_IDS.length,
+            escalationStatus: SIMULATION_ESCALATION_STATUSES[SIMULATION_ESCALATION_STATUSES.length - 1],
+            lastChange: Date.now(),
+          } : a))
           setAuditLog(
-            signalIds.map((_, i) => ({
-              timestamp: base - (signalIds.length - 1 - i) * 400,
+            SIMULATION_SIGNAL_IDS.map((_, i) => ({
+              timestamp: base - (SIMULATION_SIGNAL_IDS.length - 1 - i) * 400,
               agentId: targetAgent,
               signal: SIGNAL_NAMES[i],
               tier: i + 1,
@@ -557,6 +577,34 @@ export function ControlCenter() {
   useEffect(() => {
     return () => { simTimeoutsRef.current.forEach((t) => clearTimeout(t)) }
   }, [])
+
+  useEffect(() => {
+    if (!simulating) return
+
+    const scrollY = window.scrollY
+    const body = document.body
+    const html = document.documentElement
+    const prevBodyPosition = body.style.position
+    const prevBodyTop = body.style.top
+    const prevBodyWidth = body.style.width
+    const prevBodyOverflow = body.style.overflow
+    const prevHtmlOverflow = html.style.overflow
+
+    body.style.position = "fixed"
+    body.style.top = `-${scrollY}px`
+    body.style.width = "100%"
+    body.style.overflow = "hidden"
+    html.style.overflow = "hidden"
+
+    return () => {
+      body.style.position = prevBodyPosition
+      body.style.top = prevBodyTop
+      body.style.width = prevBodyWidth
+      body.style.overflow = prevBodyOverflow
+      html.style.overflow = prevHtmlOverflow
+      window.scrollTo({ top: scrollY, left: 0, behavior: "auto" })
+    }
+  }, [simulating])
 
   return (
     <div className="space-y-6 [overflow-anchor:none]">
@@ -584,8 +632,8 @@ export function ControlCenter() {
           {selectedAgent && (
             <>
               <span className="text-sm text-muted-foreground">{selectedAgent.name}</span>
-              <span className={cn("text-xs font-mono px-2 py-0.5 rounded border", escalationBg(selectedAgent.escalationStatus), escalationColor(selectedAgent.escalationStatus))}>
-                {selectedAgent.escalationStatus}
+              <span className={cn("text-xs font-mono px-2 py-0.5 rounded border", escalationBg(selectedEscalationStatus ?? "quiet"), escalationColor(selectedEscalationStatus ?? "quiet"))}>
+                {selectedEscalationStatus ?? "quiet"}
               </span>
             </>
           )}
@@ -604,13 +652,13 @@ export function ControlCenter() {
         </div>
 
         <div className="flex items-center gap-3 mb-6">
-          <button type="button" onClick={handleSimulate} aria-busy={simulating} aria-disabled={simulating}
+          <button type="button" onClick={handleSimulate} onMouseDown={(e) => e.preventDefault()} aria-busy={simulating} aria-disabled={simulating}
             className={cn("group flex items-center gap-2 rounded-xl bg-destructive/10 border border-destructive/30 px-5 py-2.5 text-sm font-semibold text-destructive transition-all duration-300 hover:bg-destructive/20",
               simulating && "pointer-events-none opacity-60 cursor-wait")}>
             {simulating ? <span className="w-4 h-4 border-2 border-destructive border-t-transparent rounded-full animate-spin" /> : "▶"}
             {simulating ? "Simulating…" : "Simulate attack"}
           </button>
-          <button type="button" onClick={handleReset} className="text-xs text-muted-foreground hover:text-foreground transition-colors">Reset</button>
+          <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={handleReset} className="text-xs text-muted-foreground hover:text-foreground transition-colors">Reset</button>
         </div>
 
         <EscalationPanel tiers={tiers} activeSignalCount={activeSignalCount} onActionChange={handleActionChange} onInputChange={handleInputChange} onSave={handleSave} simulating={simulating} />
