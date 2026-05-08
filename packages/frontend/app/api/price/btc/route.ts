@@ -56,7 +56,7 @@ const handler = async (_req: NextRequest): Promise<NextResponse> => {
   });
 };
 
-export const GET = withX402(
+const x402Get = withX402(
   handler,
   {
     accepts: {
@@ -72,3 +72,69 @@ export const GET = withX402(
   { appName: "BehaviorChain · x402 demo" },
   paywall,
 );
+
+// Diagnostic mode: GET /api/price/btc?diag=1 returns a JSON snapshot of the
+// route's runtime configuration without exposing secrets. This is here so
+// we can see why the production endpoint 500s when CDP env vars are
+// configured — the regular response body is empty on error and Vercel
+// runtime logs aren't available via the MCP without a teamId.
+//
+// Safe to leave enabled: only reveals whether env vars are *present*,
+// whether the facilitator auth callback succeeds (presence of an
+// Authorization header on the returned object), and a redacted error
+// shape if the JWT generation throws. No secret values are echoed.
+export const GET = async (req: NextRequest) => {
+  try {
+    const url = new URL(req.url);
+    if (url.searchParams.get("diag") === "1") {
+      const cdpIdSet = !!process.env.CDP_API_KEY_ID;
+      const cdpSecretSet = !!process.env.CDP_API_KEY_SECRET;
+      const secretLen = (process.env.CDP_API_KEY_SECRET ?? "").length;
+      let authProbe: {
+        invoked: boolean;
+        hasVerifyAuth?: boolean;
+        error?: { name?: string; message?: string };
+      } = { invoked: false };
+      if (useCdpFacilitator && cdpFacilitator.createAuthHeaders) {
+        try {
+          const headers = await cdpFacilitator.createAuthHeaders();
+          authProbe = {
+            invoked: true,
+            hasVerifyAuth: !!headers.verify?.Authorization,
+          };
+        } catch (e) {
+          const err = e as Error;
+          authProbe = {
+            invoked: true,
+            error: { name: err.name, message: err.message?.slice(0, 200) },
+          };
+        }
+      }
+      return NextResponse.json({
+        diag: true,
+        useCdpFacilitator,
+        env: {
+          CDP_API_KEY_ID: cdpIdSet,
+          CDP_API_KEY_SECRET: cdpSecretSet,
+          CDP_API_KEY_SECRET_length: secretLen,
+          X402_NETWORK: process.env.X402_NETWORK ?? null,
+          X402_PAY_TO: process.env.X402_PAY_TO ? "set" : null,
+        },
+        network: NETWORK,
+        payTo: PAY_TO,
+        authProbe,
+      });
+    }
+    return await x402Get(req);
+  } catch (e) {
+    const err = e as Error;
+    return NextResponse.json(
+      {
+        error: "route handler threw",
+        name: err.name,
+        message: err.message?.slice(0, 500),
+      },
+      { status: 500 },
+    );
+  }
+};
