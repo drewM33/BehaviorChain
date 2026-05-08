@@ -5,6 +5,7 @@ import { ExactEvmScheme } from "@x402/evm/exact/server";
 import type { Network } from "@x402/core/types";
 import { createPaywall } from "@x402/paywall";
 import { evmPaywall } from "@x402/paywall/evm";
+import { facilitator as cdpFacilitator } from "@coinbase/x402";
 
 // Force Node.js runtime — @x402/next uses Node-only APIs
 export const runtime = "nodejs";
@@ -12,9 +13,19 @@ export const runtime = "nodejs";
 const PAY_TO =
   (process.env.X402_PAY_TO as `0x${string}` | undefined) ??
   "0x3e4A16256813D232F25F5b01c49E95ceaD44d7Ed";
-const NETWORK = (process.env.X402_NETWORK ?? "eip155:84532") as Network; // Base Sepolia
+const NETWORK = (process.env.X402_NETWORK ?? "eip155:84532") as Network; // Base Sepolia by default
 
-const facilitatorClient = new HTTPFacilitatorClient();
+// CDP-authenticated facilitator is required for Base mainnet settlement.
+// When CDP_API_KEY_ID + CDP_API_KEY_SECRET are present, route payments
+// through Coinbase's mainnet facilitator. Otherwise fall back to the free
+// public testnet facilitator at x402.org/facilitator.
+const useCdpFacilitator =
+  !!process.env.CDP_API_KEY_ID && !!process.env.CDP_API_KEY_SECRET;
+
+const facilitatorClient = useCdpFacilitator
+  ? new HTTPFacilitatorClient(cdpFacilitator)
+  : new HTTPFacilitatorClient();
+
 const resourceServer = new x402ResourceServer(facilitatorClient).register(
   NETWORK,
   new ExactEvmScheme(),
