@@ -4,7 +4,6 @@ import Link from "next/link"
 import { Navbar } from "@/components/navbar"
 import { useWallet } from "@/lib/wallet-context"
 import { networkConfig, BEHAVIOR_SNAPSHOT_REGISTRY } from "@/lib/contract"
-import { useState } from "react"
 import {
   ArrowRight,
   GitBranch,
@@ -15,12 +14,7 @@ import {
   Zap,
   Globe,
   ExternalLink,
-  Bitcoin,
-  Copy,
-  Check,
 } from "lucide-react"
-
-const X402_PATH = "/api/price/btc"
 
 const features = [
   {
@@ -122,11 +116,6 @@ export default function HomePage() {
               </a>
             </div>
           </div>
-        </section>
-
-        {/* x402 Live API */}
-        <section className="mx-auto max-w-[1400px] px-6 pb-16">
-          <X402Card path={X402_PATH} />
         </section>
 
         {/* Stats bar */}
@@ -271,91 +260,3 @@ function ArchBlock({ label, sub, accent }: { label: string; sub: string; accent?
   )
 }
 
-function X402Card({ path }: { path: string }) {
-  const [copied, setCopied] = useState(false)
-  const [open, setOpen] = useState(false)
-
-  // Resolve to an absolute URL on the client so the displayed value matches
-  // whatever origin you're on (localhost dev, Vercel preview, production).
-  const endpoint =
-    typeof window !== "undefined" ? `${window.location.origin}${path}` : path
-
-  const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(endpoint)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 1500)
-    } catch {}
-  }
-
-  return (
-    <div className="relative overflow-hidden rounded-2xl border border-primary/20 glass-panel p-6 noise-bg">
-      <div className="relative z-10 flex flex-col gap-5">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="flex items-start gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 border border-primary/20">
-              <Bitcoin className="h-5 w-5 text-primary" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-primary">x402 · Live</span>
-                <span className="rounded-full border border-border/40 px-2 py-0.5 text-[10px] font-mono text-muted-foreground">
-                  Base Sepolia
-                </span>
-              </div>
-              <h2 className="text-lg font-semibold text-foreground">Pay-per-call BTC price API</h2>
-              <p className="text-sm text-muted-foreground mt-1">
-                $0.001 USDC per request. HTTP 402 challenge → wallet signs payment → response.
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <button
-              onClick={() => setOpen((v) => !v)}
-              className="rounded-xl bg-primary text-primary-foreground px-4 py-2 text-sm font-semibold transition-all duration-300 hover:glow-sm active:scale-[0.98]"
-            >
-              {open ? "Hide" : "Try it"}
-            </button>
-            <a
-              href={path}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1.5 rounded-xl border border-border/40 px-3 py-2 text-sm font-medium text-foreground transition-all duration-300 hover:border-primary/30"
-            >
-              Open <ExternalLink className="h-3.5 w-3.5" />
-            </a>
-          </div>
-        </div>
-
-        <button
-          onClick={copy}
-          className="group flex items-center gap-3 rounded-xl border border-border/30 bg-background/40 px-4 py-3 text-left transition-all duration-300 hover:border-primary/30"
-        >
-          <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-muted-foreground shrink-0">
-            GET
-          </span>
-          <code className="flex-1 font-mono text-xs text-primary/90 break-all select-all">{endpoint}</code>
-          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-secondary/40 text-muted-foreground transition-colors group-hover:bg-primary/10 group-hover:text-primary">
-            {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-          </span>
-        </button>
-
-        {open && (
-          <div className="rounded-xl border border-border/30 bg-background/60 overflow-hidden">
-            <div className="flex items-center justify-between border-b border-border/30 px-3 py-2">
-              <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-muted-foreground">
-                Embedded paywall · sign in your wallet to receive the JSON response
-              </span>
-            </div>
-            <iframe
-              src={path}
-              title="x402 paywall"
-              className="block h-[480px] w-full bg-white"
-              sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
-            />
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
