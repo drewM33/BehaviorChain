@@ -110,15 +110,45 @@ export const GET = async (req: NextRequest) => {
           };
         }
       }
-      // Also exercise the actual x402 handler in diag mode to surface the
-      // real failure (we expect a 402 challenge for an unauthed call). We
-      // inspect the response status + body (capped) instead of returning
-      // it directly, so the diagnostic is uniform JSON.
+      // Probe the facilitator's /supported endpoint directly. The 500 we're
+      // chasing comes from initialize() throwing because no kinds came
+      // back; we want to see whether the response was an empty list, an
+      // HTTP error, or a parse failure.
+      let supportedProbe: {
+        ok?: boolean;
+        kindsCount?: number;
+        kinds?: Array<{ network?: string; scheme?: string; x402Version?: number }>;
+        error?: { name?: string; message?: string; cause?: string };
+      } = {};
+      try {
+        const supported = await facilitatorClient.getSupported();
+        supportedProbe = {
+          ok: true,
+          kindsCount: supported.kinds?.length ?? 0,
+          kinds: (supported.kinds ?? []).slice(0, 10).map((k) => ({
+            network: (k as { network?: string }).network,
+            scheme: (k as { scheme?: string }).scheme,
+            x402Version: (k as { x402Version?: number }).x402Version,
+          })),
+        };
+      } catch (e) {
+        const err = e as Error & { cause?: unknown };
+        supportedProbe = {
+          ok: false,
+          error: {
+            name: err.name,
+            message: err.message?.slice(0, 500),
+            cause: err.cause ? String(err.cause).slice(0, 500) : undefined,
+          },
+        };
+      }
+
+      // Also exercise the actual x402 handler.
       let x402Probe: {
         status?: number;
         bodyExcerpt?: string;
         paymentRequired?: boolean;
-        error?: { name?: string; message?: string };
+        error?: { name?: string; message?: string; cause?: string };
       } = {};
       try {
         const reqClone = new NextRequest(req.url, { headers: req.headers });
@@ -130,11 +160,12 @@ export const GET = async (req: NextRequest) => {
           bodyExcerpt: text.slice(0, 300),
         };
       } catch (e) {
-        const err = e as Error;
+        const err = e as Error & { cause?: unknown };
         x402Probe = {
           error: {
             name: err.name,
             message: err.message?.slice(0, 500),
+            cause: err.cause ? String(err.cause).slice(0, 500) : undefined,
           },
         };
       }
@@ -150,7 +181,11 @@ export const GET = async (req: NextRequest) => {
         },
         network: NETWORK,
         payTo: PAY_TO,
+        facilitatorUrl: useCdpFacilitator
+          ? "https://api.cdp.coinbase.com/platform/v2/x402"
+          : "https://x402.org/facilitator",
         authProbe,
+        supportedProbe,
         x402Probe,
       });
     }
