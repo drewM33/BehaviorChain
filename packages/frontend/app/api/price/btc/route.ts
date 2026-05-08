@@ -110,6 +110,34 @@ export const GET = async (req: NextRequest) => {
           };
         }
       }
+      // Also exercise the actual x402 handler in diag mode to surface the
+      // real failure (we expect a 402 challenge for an unauthed call). We
+      // inspect the response status + body (capped) instead of returning
+      // it directly, so the diagnostic is uniform JSON.
+      let x402Probe: {
+        status?: number;
+        bodyExcerpt?: string;
+        paymentRequired?: boolean;
+        error?: { name?: string; message?: string };
+      } = {};
+      try {
+        const reqClone = new NextRequest(req.url, { headers: req.headers });
+        const r = await x402Get(reqClone);
+        const text = await r.clone().text();
+        x402Probe = {
+          status: r.status,
+          paymentRequired: !!r.headers.get("payment-required"),
+          bodyExcerpt: text.slice(0, 300),
+        };
+      } catch (e) {
+        const err = e as Error;
+        x402Probe = {
+          error: {
+            name: err.name,
+            message: err.message?.slice(0, 500),
+          },
+        };
+      }
       return NextResponse.json({
         diag: true,
         useCdpFacilitator,
@@ -123,6 +151,7 @@ export const GET = async (req: NextRequest) => {
         network: NETWORK,
         payTo: PAY_TO,
         authProbe,
+        x402Probe,
       });
     }
     return await x402Get(req);
